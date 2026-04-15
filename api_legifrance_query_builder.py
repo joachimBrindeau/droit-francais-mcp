@@ -1029,5 +1029,17 @@ class LegifranceQueryBuilder:
             >>> search.reset()  # Réinitialise tout
             >>> search.set_fond("JORF")  # Commence une nouvelle requête
         """
-        self.__init__()
+        self.query = {
+            "fond": "",
+            "recherche": {
+                "champs": [],
+                "filtres": [],
+                "pageNumber": 1,
+                "pageSize": 50,
+                "operateur": "ET",
+                "sort": "PERTINENCE",
+                "secondSort": "DATE_DESC",
+                "typePagination": "DEFAUT",
+            },
+        }
         return self

@@ -18,6 +18,8 @@ flake8==7.1.1
 # Linting et vérification de style
 mypy==1.13.0
 # Vérification statique des types
+types-requests>=2.33.0
+# Stubs de typage pour la lib requests
 isort==5.13.2
 # Tri automatique des imports
 

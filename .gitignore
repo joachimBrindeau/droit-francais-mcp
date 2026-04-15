@@ -133,3 +133,4 @@ mcp_config.json
 # === Données de test sensibles ===
 test_data/secrets/
 test_data/credentials/
+.repair/

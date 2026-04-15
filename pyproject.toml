@@ -79,6 +79,7 @@ addopts = [
     "--tb=short",
     "--strict-markers",
     "--color=yes",
+    "--ignore=test_jupyter.py",
 ]
 markers = [
     "integration: Tests d'intégration (nécessitent des clés API valides)",

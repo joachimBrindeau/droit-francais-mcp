@@ -41,6 +41,7 @@ except Exception as e:
     raise
 
 # Initialisation de l'API LegiFrance
+legifranceapi: Optional[LegifranceAPI]
 try:
     legifranceapi = LegifranceAPI(sandbox=False)
 except Exception as e:
@@ -48,6 +49,7 @@ except Exception as e:
     legifranceapi = None
 
 # Initialisation de l'API Judilibre
+judilibreapi: Optional[JudilibreAPI]
 try:
     judilibreapi = JudilibreAPI(sandbox=False)
 except Exception as e:

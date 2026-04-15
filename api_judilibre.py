@@ -46,8 +46,8 @@ class JudilibreAPI:
         self.api_url = f"{self.base_url}/cassation/judilibre/v1.0"
 
         # Stockage du token
-        self.access_token = None
-        self.token_expires_at = None
+        self.access_token: Optional[str] = None
+        self.token_expires_at: Optional[datetime] = None
 
     def get_access_token(self) -> str:
         """
@@ -77,13 +77,14 @@ class JudilibreAPI:
             response.raise_for_status()
 
             token_data = response.json()
-            self.access_token = token_data["access_token"]
+            access_token: str = token_data["access_token"]
+            self.access_token = access_token
 
             # Calculer l'expiration du token (avec marge de sécurité)
             expires_in = token_data.get("expires_in", 3600)
             self.token_expires_at = datetime.now() + timedelta(seconds=expires_in - 60)
 
-            return self.access_token
+            return access_token
 
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors de l'obtention du token: {e}")
@@ -230,7 +231,7 @@ class JudilibreAPI:
         """
        
         if page_size > 50:
-            page_size = 50  # Limite maximale
+            raise ValueError("page_size ne peut pas dépasser 50")
 
         if operator not in ["or", "and", "exact"]:
             raise ValueError("operator doit être 'or', 'and' ou 'exact'")
@@ -245,7 +246,7 @@ class JudilibreAPI:
         endpoint = f"{self.api_url}/search"
 
         # Paramètres de requête
-        params = {
+        params: Dict[str, Any] = {
             "operator": operator,
             "sort": sort,
             "order": order,
