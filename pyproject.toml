@@ -45,7 +45,8 @@ dev = [
     "types-requests>=2.33.0",
     "mypy>=1.13.0",
     "ruff>=0.7.0",
-    "ipython>=9.5.0",
+    # ipython 9.x exige Python >= 3.11 ; on accepte 8.x pour rester compatible 3.10.
+    "ipython>=8",
     "jupyter>=1.1.1",
     "ipykernel>=6.29.5",
 ]

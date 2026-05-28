@@ -105,13 +105,15 @@ def test_search_omits_unset_optional_params(api: JudilibreAPI) -> None:
 
 
 def test_search_wraps_request_exception(api: JudilibreAPI) -> None:
-    with patch.object(
-        JudilibreAPI,
-        "_request",
-        side_effect=requests.exceptions.ConnectionError("net down"),
+    with (
+        patch.object(
+            JudilibreAPI,
+            "_request",
+            side_effect=requests.exceptions.ConnectionError("net down"),
+        ),
+        pytest.raises(Exception, match="Erreur lors de la recherche JudiLibre"),
     ):
-        with pytest.raises(Exception, match="Erreur lors de la recherche JudiLibre"):
-            api.search(query="x")
+        api.search(query="x")
 
 
 # ----------------------------------------------------------------------------
@@ -150,13 +152,15 @@ def test_consult_passes_id_and_query(api: JudilibreAPI) -> None:
 
 
 def test_consult_wraps_request_exception(api: JudilibreAPI) -> None:
-    with patch.object(
-        JudilibreAPI,
-        "_request",
-        side_effect=requests.exceptions.ConnectionError("net down"),
+    with (
+        patch.object(
+            JudilibreAPI,
+            "_request",
+            side_effect=requests.exceptions.ConnectionError("net down"),
+        ),
+        pytest.raises(Exception, match="Erreur lors de la récupération de la décision"),
     ):
-        with pytest.raises(Exception, match="Erreur lors de la récupération de la décision"):
-            api.consult(decision_id="abc")
+        api.consult(decision_id="abc")
 
 
 # ----------------------------------------------------------------------------
@@ -197,10 +201,12 @@ def test_taxonomy_calls_api_when_id_given(api: JudilibreAPI) -> None:
 
 
 def test_taxonomy_wraps_request_exception_with_id(api: JudilibreAPI) -> None:
-    with patch.object(
-        JudilibreAPI,
-        "_request",
-        side_effect=requests.exceptions.ConnectionError("net down"),
+    with (
+        patch.object(
+            JudilibreAPI,
+            "_request",
+            side_effect=requests.exceptions.ConnectionError("net down"),
+        ),
+        pytest.raises(Exception, match="récupération de la taxonomie 'chamber'"),
     ):
-        with pytest.raises(Exception, match="récupération de la taxonomie 'chamber'"):
-            api.taxonomy(taxonomy_id="chamber")
+        api.taxonomy(taxonomy_id="chamber")

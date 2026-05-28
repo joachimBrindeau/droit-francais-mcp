@@ -50,19 +50,23 @@ def test_ping_wraps_http_error_with_403_hint(api: LegifranceAPI) -> None:
     err_resp.status_code = 403
     err_resp.text = "Forbidden body"
     http_err = requests.exceptions.HTTPError(response=err_resp)
-    with patch.object(LegifranceAPI, "_request", side_effect=http_err):
-        with pytest.raises(Exception, match="Erreur HTTP 403"):
-            api.ping()
+    with (
+        patch.object(LegifranceAPI, "_request", side_effect=http_err),
+        pytest.raises(Exception, match="Erreur HTTP 403"),
+    ):
+        api.ping()
 
 
 def test_ping_wraps_generic_request_exception(api: LegifranceAPI) -> None:
-    with patch.object(
-        LegifranceAPI,
-        "_request",
-        side_effect=requests.exceptions.ConnectionError("net down"),
+    with (
+        patch.object(
+            LegifranceAPI,
+            "_request",
+            side_effect=requests.exceptions.ConnectionError("net down"),
+        ),
+        pytest.raises(Exception, match="Erreur lors du ping"),
     ):
-        with pytest.raises(Exception, match="Erreur lors du ping"):
-            api.ping()
+        api.ping()
 
 
 # ----------------------------------------------------------------------------
@@ -133,9 +137,11 @@ def test_search_wraps_http_error_with_status_code(api: LegifranceAPI) -> None:
     err_resp.text = "{}"
     err_resp.headers = {}
     http_err = requests.exceptions.HTTPError(response=err_resp)
-    with patch.object(LegifranceAPI, "_request", side_effect=http_err):
-        with pytest.raises(Exception, match="Erreur HTTP 500"):
-            api.search(query="x")
+    with (
+        patch.object(LegifranceAPI, "_request", side_effect=http_err),
+        pytest.raises(Exception, match="Erreur HTTP 500"),
+    ):
+        api.search(query="x")
 
 
 # ----------------------------------------------------------------------------
@@ -192,10 +198,12 @@ def test_consult_can_disable_cleaning(api: LegifranceAPI) -> None:
 
 
 def test_consult_wraps_request_exception(api: LegifranceAPI) -> None:
-    with patch.object(
-        LegifranceAPI,
-        "_request",
-        side_effect=requests.exceptions.ConnectionError("net down"),
+    with (
+        patch.object(
+            LegifranceAPI,
+            "_request",
+            side_effect=requests.exceptions.ConnectionError("net down"),
+        ),
+        pytest.raises(Exception, match="Erreur lors de la récupération"),
     ):
-        with pytest.raises(Exception, match="Erreur lors de la récupération"):
-            api.consult("LEGIARTI42")
+        api.consult("LEGIARTI42")

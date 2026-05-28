@@ -1,7 +1,7 @@
 # Makefile pour DroitFrancaisMCP
 # Simplifie les tâches courantes de développement
 
-.PHONY: help install install-dev test lint format clean run security update
+.PHONY: help install install-dev lock test test-quick lint format format-check security clean run update init version check-all
 
 # Couleurs pour l'affichage
 RED=\033[0;31m
@@ -14,15 +14,28 @@ help:  ## Afficher cette aide
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
 
-install:  ## Installer les dépendances de production
+install:  ## Installer les dépendances de production (uv si dispo, sinon pip)
 	@echo "$(GREEN)Installation depuis pyproject.toml...$(NC)"
-	pip install .
+	@if command -v uv >/dev/null 2>&1; then \
+		uv pip install . ; \
+	else \
+		pip install . ; \
+	fi
 	@echo "$(GREEN)✓ Installation terminée$(NC)"
 
-install-dev:  ## Installer les dépendances de développement
+install-dev:  ## Installer en mode éditable avec extras dev (uv si dispo)
 	@echo "$(GREEN)Installation en mode éditable avec extras dev...$(NC)"
-	pip install -e ".[dev]"
+	@if command -v uv >/dev/null 2>&1; then \
+		uv sync --extra dev ; \
+	else \
+		pip install -e ".[dev]" ; \
+	fi
 	@echo "$(GREEN)✓ Installation terminée$(NC)"
+
+lock:  ## Régénérer uv.lock (commit le fichier après modification de pyproject.toml)
+	@echo "$(GREEN)Génération du lockfile uv...$(NC)"
+	uv lock
+	@echo "$(GREEN)✓ uv.lock à jour$(NC)"
 
 test:  ## Lancer les tests
 	@echo "$(GREEN)Lancement des tests...$(NC)"
