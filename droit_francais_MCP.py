@@ -13,48 +13,75 @@ Remarques :
 
 import logging
 import sys
-from typing import Any, Dict, List, Optional, Union
+from functools import wraps
+from typing import Any, Callable, Optional, Type, TypeVar
+
 from fastmcp import FastMCP
 
 from api_judilibre import JudilibreAPI
 from api_legifrance import LegifranceAPI
+from api_legifrance_query_builder import LegifranceQueryBuilder
 
 # ============================================================================
 # CONFIGURATION ET INITIALISATION
 # ============================================================================
 
-# Configuration du logging pour debugging
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stderr),  # Envoi vers stderr pour MCP
-    ],
+    handlers=[logging.StreamHandler(sys.stderr)],  # MCP exige stderr pour les logs
 )
 logger = logging.getLogger(__name__)
 
+
+def _safe_init(cls: Type[Any], label: str) -> Optional[Any]:
+    """
+    Instancie un client API en mode production en interceptant les erreurs
+    d'initialisation pour permettre au serveur MCP de démarrer même si une API
+    est indisponible.
+    """
+    try:
+        return cls(sandbox=False)
+    except Exception as e:
+        logger.error(f"Erreur lors de l'initialisation de l'API {label}: {e}")
+        return None
+
+
 # Initialisation de FastMCP
 try:
-    mcp = FastMCP(f"FR Légifrance et Judilibre MCP Server - Droit Français Officiel")
+    mcp = FastMCP("FR Légifrance et Judilibre MCP Server - Droit Français Officiel")
 except Exception as e:
     logger.error(f"Échec de l'initialisation du serveur MCP: {e}")
     raise
 
-# Initialisation de l'API LegiFrance
-legifranceapi: Optional[LegifranceAPI]
-try:
-    legifranceapi = LegifranceAPI(sandbox=False)
-except Exception as e:
-    logger.error(f"Erreur lors de l'initialisation de l'API LegiFrance: {e}")
-    legifranceapi = None
+legifranceapi: Optional[LegifranceAPI] = _safe_init(LegifranceAPI, "LegiFrance")
+judilibreapi: Optional[JudilibreAPI] = _safe_init(JudilibreAPI, "Judilibre")
 
-# Initialisation de l'API Judilibre
-judilibreapi: Optional[JudilibreAPI]
-try:
-    judilibreapi = JudilibreAPI(sandbox=False)
-except Exception as e:
-    logger.error(f"Erreur lors de l'initialisation de l'API Judilibre: {e}")
-    judilibreapi = None
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def safe_mcp_tool(error_label: str, on_error_return: Any) -> Callable[[F], F]:
+    """
+    Décorateur qui ajoute un `try/except` + `logger.error` standardisé autour
+    d'un `@mcp.tool`. Évite la duplication du même bloc défensif dans chaque
+    outil exposé.
+
+    Args:
+        error_label: étiquette utilisée dans le message de log.
+        on_error_return: valeur retournée si l'outil lève une exception
+            (préserve le contrat de retour observé par les tests).
+    """
+    def decorator(fn: F) -> F:
+        @wraps(fn)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            try:
+                return fn(*args, **kwargs)
+            except Exception as e:
+                logger.error(f"{error_label}: {e}")
+                return on_error_return
+        return wrapper  # type: ignore[return-value]
+    return decorator
 
 
 # ============================================================================
@@ -126,7 +153,7 @@ def documentation_juridictions_judilibre() -> str:
     return """
 # JURIDICTIONS
 
-**cc**: Cour de cassation | **ca**: Cours d'appel | **tj**: Tribunaux judiciaires | **tcom**: Tribunaux de commerce 
+**cc**: Cour de cassation | **ca**: Cours d'appel | **tj**: Tribunaux judiciaires | **tcom**: Tribunaux de commerce
 """
 
 
@@ -205,6 +232,7 @@ def documentation_options_tri_judilibre() -> str:
 
 
 @mcp.tool
+@safe_mcp_tool("Erreur lors de la recherche Légifrance", on_error_return="Erreur lors de la recherche")
 def rechercher_legifrance(
     recherche: str,
     fond: str = "ALL",
@@ -244,58 +272,51 @@ def rechercher_legifrance(
         - legifrance://documentation/filtres-dates - Guide sur les filtres de dates
         - legifrance://documentation/options-tri - Valeurs pour sort
     """
+    if not recherche or not recherche.strip():
+        logger.error("Requête de recherche vide")
+        return []
 
-    try:
-        # Validation des paramètres
-        if not recherche or not recherche.strip():
-            logger.error("Requête de recherche vide")
-            return []
+    if legifranceapi is None:
+        logger.error("API Légifrance non initialisée")
+        return []
 
-        # Vérification de l'initialisation de l'API
-        if legifranceapi is None:
-            logger.error("API Légifrance non initialisée")
-            return []
+    # Source unique de vérité: LegifranceQueryBuilder.DATE_FILTER_FACETTES.
+    warning = None
+    if (date_debut or date_fin) and fond not in LegifranceQueryBuilder.DATE_FILTER_FACETTES:
+        warning = [
+            f"⚠️ ATTENTION: Les filtres de dates (date_debut/date_fin) sont ignorés pour le fond '{fond}'. "
+            f"Les filtres de dates ne fonctionnent que pour les fonds: "
+            f"{', '.join(sorted(LegifranceQueryBuilder.DATE_FILTER_FACETTES))}"
+        ]
+        date_debut = None
+        date_fin = None
 
-        # Validation des filtres de dates selon le fond
-        FONDS_WITH_DATE_FILTERS = ["JORF", "LODA_DATE", "LODA_ETAT", "JURI", "CETAT", "JUFI", "CONSTIT", "KALI", "CIRC", "ACCO"]
+    search_results = legifranceapi.search(
+        query=recherche,
+        fond=fond,
+        field_type=type_champ,
+        search_type=type_recherche,
+        code=code,
+        date_start=date_debut,
+        date_end=date_fin,
+        page_number=page,
+        page_size=page_taille,
+        sort=tri,
+        operator=operateur,
+    )
 
-        if (date_debut or date_fin) and fond not in FONDS_WITH_DATE_FILTERS:
-            warning = [
-                f"⚠️ ATTENTION: Les filtres de dates (date_debut/date_fin) sont ignorés pour le fond '{fond}'. "
-                f"Les filtres de dates ne fonctionnent que pour les fonds: {', '.join(FONDS_WITH_DATE_FILTERS)}"
-            ]
-            # Effacer les filtres de dates pour éviter toute confusion
-            date_debut = None
-            date_fin = None
-        else:
-            warning = None
+    search_results = search_results or []
+    if warning:
+        search_results = {"warning": warning, "results": search_results}
 
-        search_results = legifranceapi.search(
-            query=recherche,
-            fond=fond,
-            field_type=type_champ,
-            search_type=type_recherche,
-            code=code,
-            date_start=date_debut,
-            date_end=date_fin,
-            page_number=page,
-            page_size=page_taille,
-            sort=tri,
-            operator=operateur,
-        )
-
-        search_results = search_results or []
-        if warning:
-            search_results = {"warning": warning, "results": search_results}
-
-        return search_results
-
-    except Exception as e:
-        logger.error(f"Erreur lors de la recherche '{recherche}': {e}")
-        return "Erreur lors de la recherche"
+    return search_results
 
 
 @mcp.tool
+@safe_mcp_tool(
+    "Erreur lors de la récupération de l'article",
+    on_error_return={"erreur": "Erreur de récupération d'article"},
+)
 def consulter_legifrance(id: str) -> Any:
     """
     Récupère le texte intégral d'un article juridique depuis Légifrance.
@@ -307,26 +328,17 @@ def consulter_legifrance(id: str) -> Any:
                    Obtenu depuis les résultats de recherche (metadata 'id')
 
     Returns:
-        Le contenu juridique 
+        Le contenu juridique
     """
+    if not id or not id.strip():
+        logger.error("ID article vide")
+        return {"erreur": "L'ID de l'article ne peut pas être vide"}
 
-    try:
-        # Validation des paramètres
-        if not id or not id.strip():
-            logger.error("ID article vide")
-            return {"erreur": "L'ID de l'article ne peut pas être vide"}
+    if legifranceapi is None:
+        logger.error("API Légifrance non initialisée")
+        return {"erreur": "L'API Légifrance n'est pas initialisée"}
 
-        # Vérification de l'initialisation de l'API
-        if legifranceapi is None:
-            logger.error("API Légifrance non initialisée")
-            return {"erreur": "L'API Légifrance n'est pas initialisée"}
-
-        article = legifranceapi.consult(id)
-        return article
-
-    except Exception as e:
-        logger.error(f"Erreur lors de la récupération de l'article '{id}'")
-        return {"erreur": f"Erreur de récupération d'article: {str(e)}"}
+    return legifranceapi.consult(id)
 
 
 # ============================================================================
@@ -335,6 +347,10 @@ def consulter_legifrance(id: str) -> Any:
 
 
 @mcp.tool
+@safe_mcp_tool(
+    "Erreur lors de la récupération de la taxonomie",
+    on_error_return={"erreur": "Erreur taxonomie"},
+)
 def obtenir_taxonomie_judilibre(
     taxonomy_id: Optional[str] = None,
     key: Optional[str] = None,
@@ -344,7 +360,7 @@ def obtenir_taxonomie_judilibre(
     """
     Récupère les valeurs valides pour les filtres de recherche Judilibre (juridictions, chambres, solutions, etc.).
     Utiliser les ressources en priorité pour connaître les valeurs possibles avant d'utiliser cette fonction.
-    
+
     Args:
         taxonomy_id: Type de taxonomie (jurisdiction, chamber, solution, theme, location, etc.)
         key: Clé pour obtenir l'intitulé complet
@@ -368,23 +384,20 @@ def obtenir_taxonomie_judilibre(
         f"APPEL: obtenir_taxonomie_judilibre(taxonomy_id='{taxonomy_id}', key='{key}', value='{value}', context_value='{context_value}')"
     )
 
-    try:
-        if judilibreapi is None:
-            logger.error("API Judilibre non initialisée")
-            return {"erreur": "L'API Judilibre n'est pas initialisée"}
+    if judilibreapi is None:
+        logger.error("API Judilibre non initialisée")
+        return {"erreur": "L'API Judilibre n'est pas initialisée"}
 
-        result = judilibreapi.taxonomy(
-            taxonomy_id=taxonomy_id, key=key, value=value, context_value=context_value
-        )
-
-        return result
-
-    except Exception as e:
-        logger.error(f"Erreur lors de la récupération de la taxonomie: {e}")
-        return {"erreur": f"Erreur taxonomie"}
+    return judilibreapi.taxonomy(
+        taxonomy_id=taxonomy_id, key=key, value=value, context_value=context_value
+    )
 
 
 @mcp.tool
+@safe_mcp_tool(
+    "Erreur lors de la recherche Judilibre",
+    on_error_return="Erreur lors de la recherche Judilibre",
+)
 def rechercher_jurisprudence_judilibre(
     recherche: Optional[str] = None,
     juridiction: Optional[str] = None,
@@ -436,45 +449,41 @@ def rechercher_jurisprudence_judilibre(
         - judilibre://documentation/solutions - Types de solutions
         - judilibre://documentation/options-tri - Options de tri (tri + ordre)
    """
+    if judilibreapi is None:
+        logger.error("API Judilibre non initialisée")
+        return [{"erreur": "L'API Judilibre n'est pas initialisée"}]
 
-    try:
-        if judilibreapi is None:
-            logger.error("API Judilibre non initialisée")
-            return [{"erreur": "L'API Judilibre n'est pas initialisée"}]
+    # Conversion des paramètres scalaires en listes pour l'API JudiLibre.
+    jurisdiction_list = [juridiction] if juridiction else None
+    location_list = [localisation] if localisation else None
+    chamber_list = [chambre] if chambre else None
+    type_list = [type_decision] if type_decision else None
+    theme_list = [theme] if theme else None
+    solution_list = [solution] if solution else None
 
-        # Conversion des paramètres en listes si fournis
-        jurisdiction_list = [juridiction] if juridiction else ["cc", "ca", "tj", "tcom"] # Par défaut toutes les juridictions
-        location_list = [localisation] if localisation else None
-        chamber_list = [chambre] if chambre else None
-        type_list = [type_decision] if type_decision else None
-        theme_list = [theme] if theme else None
-        solution_list = [solution] if solution else None
-
-        results = judilibreapi.search(
-            query=recherche,
-            jurisdiction=jurisdiction_list,
-            location=location_list,
-            chamber=chamber_list,
-            type=type_list,
-            theme=theme_list,
-            solution=solution_list,
-            date_start=date_debut,
-            date_end=date_fin,
-            sort=tri,
-            order=ordre,
-            page_size=nombre_resultats,
-            page=page,
-            resolve_references=True,  # Obtenir les intitulés complets
-        )
-
-        return results
-
-    except Exception as e:
-        logger.error(f"Erreur lors de la recherche Judilibre: {e}")
-        return "Erreur lors de la recherche Judilibre"
+    return judilibreapi.search(
+        query=recherche,
+        jurisdiction=jurisdiction_list,
+        location=location_list,
+        chamber=chamber_list,
+        type=type_list,
+        theme=theme_list,
+        solution=solution_list,
+        date_start=date_debut,
+        date_end=date_fin,
+        sort=tri,
+        order=ordre,
+        page_size=nombre_resultats,
+        page=page,
+        resolve_references=True,
+    )
 
 
 @mcp.tool
+@safe_mcp_tool(
+    "Erreur lors de la récupération de la décision",
+    on_error_return={"erreur": "Erreur récupération décision"},
+)
 def consulter_decision_judilibre(decision_id: str) -> Any:
     """
     Récupère le contenu d'une décision de justice depuis Judilibre.
@@ -490,21 +499,15 @@ def consulter_decision_judilibre(decision_id: str) -> Any:
     """
     logger.debug(f"APPEL: obtenir_decision_judilibre(decision_id='{decision_id}')")
 
-    try:
-        if not decision_id or not decision_id.strip():
-            logger.error("ID décision vide")
-            return {"erreur": "L'ID de la décision ne peut pas être vide"}
+    if not decision_id or not decision_id.strip():
+        logger.error("ID décision vide")
+        return {"erreur": "L'ID de la décision ne peut pas être vide"}
 
-        if judilibreapi is None:
-            logger.error("API Judilibre non initialisée")
-            return {"erreur": "L'API Judilibre n'est pas initialisée"}
+    if judilibreapi is None:
+        logger.error("API Judilibre non initialisée")
+        return {"erreur": "L'API Judilibre n'est pas initialisée"}
 
-        decision = judilibreapi.consult(decision_id=decision_id)
-        return decision
-
-    except Exception as e:
-        logger.error(f"Erreur lors de la récupération de la décision '{decision_id}': {e}")
-        return {"erreur": f"Erreur récupération décision"}
+    return judilibreapi.consult(decision_id=decision_id)
 
 
 if __name__ == "__main__":

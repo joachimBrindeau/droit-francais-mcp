@@ -62,6 +62,8 @@ py-modules = [
     "api_legifrance",
     "api_judilibre",
     "api_legifrance_query_builder",
+    "piste_auth",
+    "piste_utils",
     "__version__",
 ]
 

@@ -13,56 +13,31 @@ Remarques :
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
 
 
 class LegifranceQueryBuilder:
     """Générateur de requêtes pour l'API Légifrance"""
 
-    # Constantes pour les types de recherche
-    TYPE_RECHERCHE = {
-        "UN_DES_MOTS": "UN_DES_MOTS",
-        "EXACTE": "EXACTE",
-        "TOUS_LES_MOTS_DANS_UN_CHAMP": "TOUS_LES_MOTS_DANS_UN_CHAMP",
-        "AUCUN_DES_MOTS": "AUCUN_DES_MOTS",
-        "AUCUNE_CORRESPONDANCE_A_CETTE_EXPRESSION": "AUCUNE_CORRESPONDANCE_A_CETTE_EXPRESSION",
-    }
+    # Valeurs valides pour le type de recherche
+    TYPE_RECHERCHE: ClassVar[FrozenSet[str]] = frozenset({
+        "UN_DES_MOTS",
+        "EXACTE",
+        "TOUS_LES_MOTS_DANS_UN_CHAMP",
+        "AUCUN_DES_MOTS",
+        "AUCUNE_CORRESPONDANCE_A_CETTE_EXPRESSION",
+    })
 
-    # Constantes pour les types de champs avec descriptions et usage
-    TYPE_CHAMP = {
-        "ALL": "ALL",  # Recherche dans tous les champs
-        "TITLE": "TITLE",  # Titre du texte
-        "TABLE": "TABLE",  # Table des matières
-        "NOR": "NOR",  # Numéro d'ordre réglementaire
-        "NUM": "NUM",  # Numéro du texte
-        "ADVANCED_TEXTE_ID": "ADVANCED_TEXTE_ID",  # Identifiant technique du texte
-        "NUM_DELIB": "NUM_DELIB",  # Numéro de délibération
-        "NUM_DEC": "NUM_DEC",  # Numéro de décision
-        "NUM_ARTICLE": "NUM_ARTICLE",  # Numéro d'article
-        "ARTICLE": "ARTICLE",  # Contenu des articles
-        "MINISTERE": "MINISTERE",  # Ministère émetteur
-        "VISA": "VISA",  # Visas du texte
-        "NOTICE": "NOTICE",  # Notice du texte
-        "VISA_NOTICE": "VISA_NOTICE",  # Visas et notice combinés
-        "TRAVAUX_PREP": "TRAVAUX_PREP",  # Travaux préparatoires
-        "SIGNATURE": "SIGNATURE",  # Signataires
-        "NOTA": "NOTA",  # Nota du texte
-        "NUM_AFFAIRE": "NUM_AFFAIRE",  # Numéro d'affaire (jurisprudence)
-        "ABSTRATS": "ABSTRATS",  # Résumés/abstracts
-        "RESUMES": "RESUMES",  # Résumés
-        "TEXTE": "TEXTE",  # Contenu textuel complet
-        "ECLI": "ECLI",  # Identifiant ECLI (jurisprudence européenne)
-        "NUM_LOI_DEF": "NUM_LOI_DEF",  # Numéro de loi déférée
-        "TYPE_DECISION": "TYPE_DECISION",  # Type de décision
-        "NUMERO_INTERNE": "NUMERO_INTERNE",  # Numéro interne
-        "REF_PUBLI": "REF_PUBLI",  # Référence de publication
-        "RESUME_CIRC": "RESUME_CIRC",  # Résumé de circulaire
-        "TEXTE_REF": "TEXTE_REF",  # Texte de référence
-        "TITRE_LOI_DEF": "TITRE_LOI_DEF",  # Titre de loi déférée
-        "RAISON_SOCIALE": "RAISON_SOCIALE",  # Raison sociale (accords d'entreprise)
-        "MOTS_CLES": "MOTS_CLES",  # Mots-clés
-        "IDCC": "IDCC",  # Identifiant de convention collective
-    }
+    # Valeurs valides pour le type de champ (descriptions: voir TYPE_CHAMP_DESCRIPTIONS)
+    TYPE_CHAMP: ClassVar[FrozenSet[str]] = frozenset({
+        "ALL", "TITLE", "TABLE", "NOR", "NUM", "ADVANCED_TEXTE_ID",
+        "NUM_DELIB", "NUM_DEC", "NUM_ARTICLE", "ARTICLE", "MINISTERE",
+        "VISA", "NOTICE", "VISA_NOTICE", "TRAVAUX_PREP", "SIGNATURE",
+        "NOTA", "NUM_AFFAIRE", "ABSTRATS", "RESUMES", "TEXTE", "ECLI",
+        "NUM_LOI_DEF", "TYPE_DECISION", "NUMERO_INTERNE", "REF_PUBLI",
+        "RESUME_CIRC", "TEXTE_REF", "TITRE_LOI_DEF", "RAISON_SOCIALE",
+        "MOTS_CLES", "IDCC",
+    })
 
     # Descriptions détaillées des types de champs
     TYPE_CHAMP_DESCRIPTIONS = {
@@ -260,22 +235,27 @@ class LegifranceQueryBuilder:
         },
     }
 
-    # Constantes pour les fonds avec descriptions
-    FONDS = {
-        "ALL": "ALL",  # Tous les fonds - Recherche transversale
-        "JORF": "JORF",  # Journal Officiel de la République Française - Textes publiés au JO
-        "CNIL": "CNIL",  # Commission Nationale de l'Informatique et des Libertés - Décisions et délibérations
-        "CETAT": "CETAT",  # Conseil d'État - Jurisprudence administrative
-        "JURI": "JURI",  # Jurisprudence judiciaire - Décisions de justice
-        "JUFI": "JUFI",  # Jurisprudence financière - Décisions des juridictions financières
-        "CONSTIT": "CONSTIT",  # Conseil Constitutionnel - Décisions constitutionnelles
-        "KALI": "KALI",  # Conventions collectives - Accords collectifs de travail
-        "CODE_DATE": "CODE_DATE",  # Codes consolidés - Recherche par date de version
-        "CODE_ETAT": "CODE_ETAT",  # Codes consolidés - Recherche par état juridique
-        "LODA_DATE": "LODA_DATE",  # Lois, Ordonnances, Décrets, Arrêtés - Recherche par date de version
-        "LODA_ETAT": "LODA_ETAT",  # Lois, Ordonnances, Décrets, Arrêtés - Recherche par état juridique
-        "CIRC": "CIRC",  # Circulaires et instructions - Textes d'application
-        "ACCO": "ACCO",  # Accords d'entreprise - Accords collectifs d'entreprise
+    # Valeurs valides pour le fonds (descriptions: voir FONDS_DESCRIPTIONS)
+    FONDS: ClassVar[FrozenSet[str]] = frozenset({
+        "ALL", "JORF", "CNIL", "CETAT", "JURI", "JUFI", "CONSTIT",
+        "KALI", "CODE_DATE", "CODE_ETAT", "LODA_DATE", "LODA_ETAT",
+        "CIRC", "ACCO",
+    })
+
+    # Source de vérité unique: quels fonds supportent un filtre par date
+    # et quelle facette utiliser. Utilisée par add_dates() ET par la couche MCP
+    # (`droit_francais_MCP.rechercher_legifrance`) pour la validation.
+    DATE_FILTER_FACETTES: ClassVar[Dict[str, str]] = {
+        "JORF":       "DATE_PUBLICATION",
+        "LODA_DATE":  "DATE_PUBLICATION",
+        "LODA_ETAT":  "DATE_PUBLICATION",
+        "JURI":       "DATE_DECISION",
+        "CETAT":      "DATE_DECISION",
+        "JUFI":       "DATE_DECISION",
+        "CONSTIT":    "DATE_DECISION",
+        "KALI":       "DATE_SIGNATURE",
+        "CIRC":       "DATE_SIGNATURE",
+        "ACCO":       "DATE_SIGNATURE",
     }
 
     # Descriptions détaillées des fonds
@@ -400,9 +380,9 @@ class LegifranceQueryBuilder:
         Raises:
             ValueError: Si le fonds spécifié n'est pas valide
         """
-        if fond not in self.FONDS.values():
+        if fond not in self.FONDS:
             raise ValueError(
-                f"Fonds invalide. Utilisez une des valeurs: {list(self.FONDS.values())}"
+                f"Fonds invalide. Utilisez une des valeurs: {sorted(self.FONDS)}"
             )
         self.query["fond"] = fond
         return self
@@ -476,9 +456,9 @@ class LegifranceQueryBuilder:
             >>> critere2 = search.create_critere("divorce", "UN_DES_MOTS")
             >>> search.add_champ("TITLE", [critere1, critere2], "OU")
         """
-        if type_champ not in self.TYPE_CHAMP.values():
+        if type_champ not in self.TYPE_CHAMP:
             raise ValueError(
-                f"Type de champ invalide. Utilisez une des valeurs: {list(self.TYPE_CHAMP.values())}"
+                f"Type de champ invalide. Utilisez une des valeurs: {sorted(self.TYPE_CHAMP)}"
             )
 
         champ = {"typeChamp": type_champ, "criteres": criteres, "operateur": operateur}
@@ -566,9 +546,9 @@ class LegifranceQueryBuilder:
             ...     criteres=[sous_critere1, sous_critere2]
             ... )
         """
-        if type_recherche not in self.TYPE_RECHERCHE.values():
+        if type_recherche not in self.TYPE_RECHERCHE:
             raise ValueError(
-                f"Type de recherche invalide. Utilisez une des valeurs: {list(self.TYPE_RECHERCHE.values())}"
+                f"Type de recherche invalide. Utilisez une des valeurs: {sorted(self.TYPE_RECHERCHE)}"
             )
 
         critere: Dict[str, Any] = {
@@ -755,19 +735,12 @@ class LegifranceQueryBuilder:
             LegifranceQueryBuilder: Instance pour chaînage des méthodes
 
         """
-        # La date de recherche est spécifique au fond
-        # Une facette principale est généralement admise pour les fonds qui supportent le filtrage
-        # La liste est le résultat d'un scan exhaustif des fonds et facettes.
+        # La facette à utiliser est dérivée du fond via DATE_FILTER_FACETTES (SSOT).
         fond = self.query.get("fond", "")
-        if fond in ["JORF", "LODA_DATE", "LODA_ETAT"]:
-            facette_principale = "DATE_PUBLICATION"
-        elif fond in ["CETAT", "JURI", "JUFI", "CONSTIT"]:
-            facette_principale = "DATE_DECISION"
-        elif fond in ["KALI", "CIRC", "ACCO"]:
-            facette_principale = "DATE_SIGNATURE"
-        else:
-            # No filtering on dates
-            return self  
+        facette_principale = self.DATE_FILTER_FACETTES.get(fond)
+        if facette_principale is None:
+            # Fond sans support du filtrage par date
+            return self
 
         # Apply date filter
         if end_date is not None:
