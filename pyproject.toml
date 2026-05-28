@@ -11,7 +11,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["mcp", "legifrance", "judilibre", "droit", "juridique", "france", "api"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,17 +19,20 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Legal",
 ]
 
 dependencies = [
-    "fastmcp>=2.12.3",
+    # FastMCP 3.x change le contrat des décorateurs/imports — voir
+    # https://gofastmcp.com/getting-started/installation. Cap pour éviter
+    # une mise à jour majeure non testée.
+    "fastmcp>=2.12.3,<3",
     "requests>=2.32.5",
     "python-dotenv>=1.1.1",
 ]
@@ -39,16 +42,17 @@ dev = [
     "pytest>=8.4.2",
     "pytest-cov>=6.0.0",
     "pytest-asyncio>=0.25.2",
-    "black>=24.10.0",
-    "flake8>=7.1.1",
+    "types-requests>=2.33.0",
     "mypy>=1.13.0",
-    "isort>=5.13.2",
-    "safety>=3.2.11",
-    "bandit>=1.8.0",
-    "ipython>=9.5.0",
+    "ruff>=0.7.0",
+    # ipython 9.x exige Python >= 3.11 ; on accepte 8.x pour rester compatible 3.10.
+    "ipython>=8",
     "jupyter>=1.1.1",
     "ipykernel>=6.29.5",
 ]
+
+[project.scripts]
+droit-francais-mcp = "droit_francais_mcp.server:main"
 
 [project.urls]
 Homepage = "https://github.com/jmtanguy/DroitFrancaisMCP"
@@ -56,23 +60,45 @@ Documentation = "https://github.com/jmtanguy/DroitFrancaisMCP#readme"
 Repository = "https://github.com/jmtanguy/DroitFrancaisMCP"
 Issues = "https://github.com/jmtanguy/DroitFrancaisMCP/issues"
 
-[tool.setuptools]
-py-modules = [
-    "droit_francais_MCP",
-    "api_legifrance",
-    "api_judilibre",
-    "api_legifrance_query_builder",
-    "piste_auth",
-    "piste_utils",
-    "__version__",
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["droit_francais_mcp*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle ; F: pyflakes ; I: isort ; B: flake8-bugbear ;
+# UP: pyupgrade ; S: flake8-bandit ; SIM: flake8-simplify.
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+ignore = [
+    "E501",  # line-too-long — laisser au formatter
+    "B904",  # `raise … from` — usage volontairement minimaliste
+    "UP006", # legacy List/Dict — compat 3.9 conservée dans le code existant
+    "UP007", # Optional[X] vs X | None — idem
+    "UP035", # imports typing — idem
 ]
 
-[tool.black]
-line-length = 100
-target-version = ["py38", "py39", "py310", "py311"]
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]  # asserts + credentials de test
+"examples/**" = ["S101", "S105", "S106", "F401"]  # exploration / no-op imports tolérés
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true       # fastmcp, dotenv n'ont pas de stubs publics
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false       # les tests peuvent inférer beaucoup de types
 
 [tool.pytest.ini_options]
-testpaths = ["."]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -81,7 +107,6 @@ addopts = [
     "--tb=short",
     "--strict-markers",
     "--color=yes",
-    "--ignore=test_jupyter.py",
 ]
 markers = [
     "integration: Tests d'intégration (nécessitent des clés API valides)",

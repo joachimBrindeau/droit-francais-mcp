@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Client pour l'API Légifrance via PISTE.
 Documentation de l'API Légifrance : https://piste.gouv.fr/api-dila-legifrance/
@@ -12,14 +11,15 @@ Remarques :
    et d’outils d’intelligence artificielle.
 """
 
+import contextlib
 from datetime import date
-from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
+from typing import Any, ClassVar, Dict, FrozenSet, List
 
 import requests
 
-from api_legifrance_query_builder import LegifranceQueryBuilder
-from piste_auth import ERR_403_MESSAGE, PISTE_HTTP_TIMEOUT, PisteOAuthClient
-from piste_utils import recursive_filter
+from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
+from droit_francais_mcp.piste.auth import ERR_403_MESSAGE, PisteOAuthClient
+from droit_francais_mcp.piste.filters import recursive_filter
 
 
 class LegifranceAPI(PisteOAuthClient):
@@ -27,45 +27,33 @@ class LegifranceAPI(PisteOAuthClient):
     Client pour l'API Légifrance.
     """
 
-    _API_LABEL = "Légifrance"
-    _ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
-        "id", "title", "text", "values", "datePublication", "startDate",
-        "origine", "nature", "natureJuridiction", "solution", "numeroAffaire",
-        "president", "avocats", "titre", "texte", "juridiction", "content",
-    })
-    _MAX_DEPTH: ClassVar[int] = 8
+    API_LABEL = "Légifrance"
+    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "id",
+            "title",
+            "text",
+            "values",
+            "datePublication",
+            "startDate",
+            "origine",
+            "nature",
+            "natureJuridiction",
+            "solution",
+            "numeroAffaire",
+            "president",
+            "avocats",
+            "titre",
+            "texte",
+            "juridiction",
+            "content",
+        }
+    )
+    MAX_DEPTH: ClassVar[int] = 8
 
     def __init__(self, sandbox: bool = True):
         super().__init__(sandbox=sandbox)
         self.api_url = f"{self.base_url}/dila/legifrance/lf-engine-app"
-
-    def test_connection(self) -> dict:
-        """
-        Teste la connexion à l'API en vérifiant que le token est valide.
-        """
-        try:
-            token = self.get_access_token()
-            token_preview = f"{token[:10]}...{token[-10:]}" if len(token) > 20 else "***"
-            return {
-                "status": "success",
-                "base_url": self.base_url,
-                "api_url": self.api_url,
-                "token_obtained": True,
-                "token_preview": token_preview,
-                "token_expires_at": (
-                    self.token_expires_at.isoformat() if self.token_expires_at else None
-                ),
-                "message": (
-                    "Token obtenu avec succès. Vérifiez votre abonnement à l'API Légifrance sur "
-                    "https://piste.gouv.fr/ si vous obtenez des erreurs 403."
-                ),
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "message": "Échec de l'obtention du token. Vérifiez vos identifiants dans le fichier .env",
-            }
 
     def ping(self) -> str:
         """
@@ -79,38 +67,31 @@ class LegifranceAPI(PisteOAuthClient):
         """
         endpoint = f"{self.api_url}/search/ping"
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint)
             return response.text.strip()
         except requests.exceptions.HTTPError as e:
             error_msg = f"Erreur HTTP {e.response.status_code} lors du ping"
             if e.response.status_code == 403:
                 error_msg += f"\n⚠️ {ERR_403_MESSAGE}"
-            try:
+            with contextlib.suppress(Exception):
                 error_msg += f"\nRéponse: {e.response.text[:200]}"
-            except Exception:
-                pass
             raise Exception(error_msg)
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors du ping: {e}")
 
     def search(
         self,
-        query: Optional[str] = None,
-        fond: Optional[str] = "ALL",
+        query: str | None = None,
+        fond: str | None = "ALL",
         field_type: str = "ALL",
         search_type: str = "TOUS_LES_MOTS_DANS_UN_CHAMP",
-        code: Optional[str] = None,
-        filters: Optional[Dict[str, List[str]]] = None,
-        date_start: Optional[str] = None,
-        date_end: Optional[str] = None,
+        code: str | None = None,
+        filters: Dict[str, List[str]] | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
         page_number: int = 0,
         page_size: int = 10,
-        sort: Optional[str] = None,
+        sort: str | None = None,
         operator: str = "ET",
         advanced_search: bool = False,
         clean: bool = True,
@@ -171,7 +152,7 @@ class LegifranceAPI(PisteOAuthClient):
         critere = query_builder.create_criteria(query, search_type)
         query_builder.add_field(field_type, [critere])
 
-        if fond in ("CODE_ETAT", "CODE_DATE") and code:
+        if fond in LegifranceQueryBuilder.CODE_FONDS and code:
             query_builder.add_filtre("TEXT_NOM_CODE", [code])
 
         if filters:
@@ -193,19 +174,13 @@ class LegifranceAPI(PisteOAuthClient):
         if sort:
             query_builder.set_sort(sort)
 
-        if fond in ("JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT"):
+        if fond in LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS:
             query_builder.add_filtre("ARTICLE_LEGAL_STATUS", ["VIGUEUR"])
 
         payload = query_builder.build()
 
         try:
-            response = requests.post(
-                endpoint,
-                headers=self._get_api_headers(),
-                json=payload,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("POST", endpoint, json=payload)
             data = response.json()
             summary = self.clean(data) if clean else data
             return summary if summary else "Aucun résultat"
@@ -273,20 +248,14 @@ class LegifranceAPI(PisteOAuthClient):
             params = {"textCid": id_}
 
         try:
-            response = requests.post(
-                endpoint,
-                headers=self._get_api_headers(),
-                json=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("POST", endpoint, json=params)
             api_response = response.json()
             return self.clean(api_response) if clean else api_response
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors de la récupération de l'article: {e}")
 
-    def clean(self, x: Any) -> Optional[Any]:
+    def clean(self, x: Any) -> Any | None:
         """
         Nettoie une réponse Légifrance via le helper partagé `recursive_filter`.
         """
-        return recursive_filter(x, self._ALLOWED_KEYS, max_depth=self._MAX_DEPTH)
+        return recursive_filter(x, self.ALLOWED_KEYS, max_depth=self.MAX_DEPTH)

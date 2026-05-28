@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Client pour l'API JudiLibre via PISTE.
 Documentation de l'API JudiLibre : https://piste.gouv.fr/api-judilibre/
@@ -12,12 +11,12 @@ Remarques :
    et d’outils d’intelligence artificielle.
 """
 
-from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
+from typing import Any, ClassVar, Dict, FrozenSet, List
 
 import requests
 
-from piste_auth import PISTE_HTTP_TIMEOUT, PisteOAuthClient
-from piste_utils import recursive_filter
+from droit_francais_mcp.piste.auth import PisteOAuthClient
+from droit_francais_mcp.piste.filters import recursive_filter
 
 
 class JudilibreAPI(PisteOAuthClient):
@@ -25,17 +24,28 @@ class JudilibreAPI(PisteOAuthClient):
     Client OAuth pour l'API JudiLibre.
     """
 
-    _API_LABEL = "Judilibre"
-    _ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
-        "text", "id", "jurisdiction", "chamber", "formation", "type", "theme",
-        "publication", "decision_date", "solution", "score",
-    })
-    _MAX_DEPTH: ClassVar[int] = 5
+    API_LABEL = "Judilibre"
+    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "text",
+            "id",
+            "jurisdiction",
+            "chamber",
+            "formation",
+            "type",
+            "theme",
+            "publication",
+            "decision_date",
+            "solution",
+            "score",
+        }
+    )
+    MAX_DEPTH: ClassVar[int] = 5
 
-    _DEFAULT_JURISDICTIONS: ClassVar[tuple] = ("cc", "ca", "tj", "tcom")
-    _VALID_OPERATORS: ClassVar[frozenset] = frozenset({"or", "and", "exact"})
-    _VALID_SORTS: ClassVar[frozenset] = frozenset({"score", "scorepub", "date"})
-    _VALID_ORDERS: ClassVar[frozenset] = frozenset({"asc", "desc"})
+    DEFAULT_JURISDICTIONS: ClassVar[tuple[str, ...]] = ("cc", "ca", "tj", "tcom")
+    VALID_OPERATORS: ClassVar[frozenset[str]] = frozenset({"or", "and", "exact"})
+    VALID_SORTS: ClassVar[frozenset[str]] = frozenset({"score", "scorepub", "date"})
+    VALID_ORDERS: ClassVar[frozenset[str]] = frozenset({"asc", "desc"})
 
     def __init__(self, sandbox: bool = True):
         super().__init__(sandbox=sandbox)
@@ -43,25 +53,25 @@ class JudilibreAPI(PisteOAuthClient):
 
     def search(
         self,
-        query: Optional[str] = None,
-        field: Optional[List[str]] = None,
+        query: str | None = None,
+        field: List[str] | None = None,
         operator: str = "and",
-        type: Optional[List[str]] = None,
-        theme: Optional[List[str]] = None,
-        chamber: Optional[List[str]] = None,
-        formation: Optional[List[str]] = None,
-        jurisdiction: Optional[List[str]] = None,
-        location: Optional[List[str]] = None,
-        publication: Optional[List[str]] = None,
-        solution: Optional[List[str]] = None,
-        date_start: Optional[str] = None,
-        date_end: Optional[str] = None,
+        type: List[str] | None = None,
+        theme: List[str] | None = None,
+        chamber: List[str] | None = None,
+        formation: List[str] | None = None,
+        jurisdiction: List[str] | None = None,
+        location: List[str] | None = None,
+        publication: List[str] | None = None,
+        solution: List[str] | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
         sort: str = "scorepub",
         order: str = "desc",
         page_size: int = 50,
         page: int = 0,
         resolve_references: bool = True,
-        withFileOfType: Optional[List[str]] = None,
+        withFileOfType: List[str] | None = None,
         particularInterest: bool = False,
     ) -> Any:
         """
@@ -98,17 +108,17 @@ class JudilibreAPI(PisteOAuthClient):
         """
         if page_size > 50:
             raise ValueError("page_size ne peut pas dépasser 50")
-        if operator not in self._VALID_OPERATORS:
+        if operator not in self.VALID_OPERATORS:
             raise ValueError("operator doit être 'or', 'and' ou 'exact'")
-        if sort not in self._VALID_SORTS:
+        if sort not in self.VALID_SORTS:
             raise ValueError("sort doit être 'score', 'scorepub' ou 'date'")
-        if order not in self._VALID_ORDERS:
+        if order not in self.VALID_ORDERS:
             raise ValueError("order doit être 'asc' ou 'desc'")
 
         endpoint = f"{self.api_url}/search"
 
         if jurisdiction is None:
-            jurisdiction = list(self._DEFAULT_JURISDICTIONS)
+            jurisdiction = list(self.DEFAULT_JURISDICTIONS)
 
         params: Dict[str, Any] = {
             "operator": operator,
@@ -139,13 +149,7 @@ class JudilibreAPI(PisteOAuthClient):
                 params[name] = value
 
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                params=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint, params=params)
             return self.clean(response.json())
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors de la recherche JudiLibre: {e}")
@@ -154,7 +158,7 @@ class JudilibreAPI(PisteOAuthClient):
         self,
         decision_id: str,
         resolve_references: bool = False,
-        query: Optional[str] = None,
+        query: str | None = None,
         operator: str = "and",
     ) -> Any:
         """
@@ -177,7 +181,7 @@ class JudilibreAPI(PisteOAuthClient):
             raise ValueError(
                 "L'identifiant de la décision est obligatoire et ne peut pas être vide"
             )
-        if operator not in self._VALID_OPERATORS:
+        if operator not in self.VALID_OPERATORS:
             raise ValueError("operator doit être 'or', 'and' ou 'exact'")
 
         endpoint = f"{self.api_url}/decision"
@@ -190,23 +194,17 @@ class JudilibreAPI(PisteOAuthClient):
             params["operator"] = operator
 
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                params=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint, params=params)
             return self.clean(response.json())
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors de la récupération de la décision '{decision_id}': {e}")
 
     def taxonomy(
         self,
-        taxonomy_id: Optional[str] = None,
-        key: Optional[str] = None,
-        value: Optional[str] = None,
-        context_value: Optional[str] = None,
+        taxonomy_id: str | None = None,
+        key: str | None = None,
+        value: str | None = None,
+        context_value: str | None = None,
     ) -> Any:
         """
         Récupère les taxonomies (couples clé/valeur) employées par la recherche
@@ -258,13 +256,7 @@ class JudilibreAPI(PisteOAuthClient):
             }
 
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                params=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint, params=params)
             data = response.json()
             return data.get("result", data)
         except requests.exceptions.RequestException as e:
@@ -274,8 +266,8 @@ class JudilibreAPI(PisteOAuthClient):
                 )
             raise Exception(f"Erreur lors de la récupération des taxonomies: {e}")
 
-    def clean(self, x: Any) -> Optional[Any]:
+    def clean(self, x: Any) -> Any | None:
         """
         Nettoie une réponse JudiLibre via le helper partagé `recursive_filter`.
         """
-        return recursive_filter(x, self._ALLOWED_KEYS, max_depth=self._MAX_DEPTH)
+        return recursive_filter(x, self.ALLOWED_KEYS, max_depth=self.MAX_DEPTH)

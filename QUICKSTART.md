@@ -8,31 +8,41 @@ Guide pour démarrer avec **DroitFrancaisMCP** en 5 minutes.
 
 ### 1. Prérequis
 
-- Python 3.8+ installé
+- Python 3.10+ installé
 - Accès API PISTE ([demander ici](https://piste.gouv.fr/))
+- (Recommandé) [`uv`](https://docs.astral.sh/uv/) ou [`pipx`](https://pipx.pypa.io/) installé
 
-### 2. Installation (3 commandes)
+### 2. Installation — 1 commande
+
+#### Option A — `uvx` (zéro install, recommandé)
+
+Rien à installer : on configure directement Claude Desktop / Cursor pour appeler `uvx droit-francais-mcp` (voir étape 4).
+
+#### Option B — `pipx` (installation persistante)
 
 ```bash
-# Cloner et entrer dans le projet
-git clone https://github.com/jmtanguy/DroitFrancaisMCP.git
-cd DroitFrancaisMCP
-
-# Créer l'environnement virtuel
-python3 -m venv .venv && source .venv/bin/activate
-
-# Installer les dépendances (seulement 3 packages !)
-pip install -r requirements.txt
+pipx install droit-francais-mcp
 ```
 
-### 3. Configuration (1 minute)
+#### Option C — depuis le source
 
 ```bash
-# Copier le template
-cp .env.example .env
+git clone https://github.com/jmtanguy/DroitFrancaisMCP.git
+cd DroitFrancaisMCP
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+```
 
-# Éditer avec vos identifiants PISTE
-nano .env
+### 3. Configuration des identifiants PISTE
+
+Les identifiants peuvent être fournis :
+
+- soit via le bloc `env` du JSON MCP (voir étape 4),
+- soit via un fichier `.env` à la racine du projet (utile en dev avec `pip install -e .`).
+
+```bash
+# Optionnel : copier le template puis éditer
+cp .env.example .env
 ```
 
 Remplir :
@@ -42,11 +52,26 @@ PISTE_CLIENT_ID=votre_client_id
 PISTE_CLIENT_SECRET=votre_secret
 ```
 
-### 4. Lancer le serveur
+### 4. Configurer Claude Desktop ou Cursor
 
-Lancer install.ps1 (Windows) ou install.sh (Mac)
+```json
+{
+  "mcpServers": {
+    "droit-francais": {
+      "command": "uvx",
+      "args": ["droit-francais-mcp"],
+      "env": {
+        "PISTE_CLIENT_ID": "votre_client_id",
+        "PISTE_CLIENT_SECRET": "votre_secret"
+      }
+    }
+  }
+}
+```
 
-Démarrer Claude Desktop ou Cursor
+Remplacer `command` par `droit-francais-mcp` (sans `args`) si l'option B (pipx) a été choisie.
+
+Démarrer Claude Desktop ou Cursor — l'outil `droit-francais` apparaît dans la barre MCP.
 
 ✅ **C'est tout ! Le serveur est prêt.**
 

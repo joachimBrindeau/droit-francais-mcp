@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Utilitaires partagés entre les clients PISTE (Légifrance + JudiLibre).
 
@@ -7,7 +6,7 @@ Copyright (c) 2025 Jean-Michel Tanguy
 Licensed under the MIT License (see LICENSE file)
 """
 
-from typing import Any, FrozenSet, Optional
+from typing import Any, FrozenSet
 
 
 def recursive_filter(
@@ -15,7 +14,7 @@ def recursive_filter(
     allowed_keys: FrozenSet[str],
     depth: int = 0,
     max_depth: int = 8,
-) -> Optional[Any]:
+) -> Any | None:
     """
     Nettoie récursivement un dict/list en ne conservant que les clés `allowed_keys`
     et en supprimant les valeurs None/vides. La descente s'arrête à `max_depth`.
@@ -34,7 +33,7 @@ def recursive_filter(
         return None
 
     if isinstance(x, dict):
-        cleaned: dict = {}
+        cleaned: dict[str, Any] = {}
         for k, v in x.items():
             if not v:
                 continue
@@ -52,7 +51,8 @@ def recursive_filter(
         filtered = [
             cleaned_v
             for v in x
-            if v and (cleaned_v := recursive_filter(v, allowed_keys, depth + 1, max_depth)) is not None
+            if v
+            and (cleaned_v := recursive_filter(v, allowed_keys, depth + 1, max_depth)) is not None
         ]
         return filtered if filtered else None
 

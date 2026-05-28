@@ -103,27 +103,77 @@ Afin de valider l'accès aux API, vous devez également valider les conditions d
 
 ## 🚀 Installation
 
-### 1. Cloner le dépôt
+### Option 1 — Exécution éphémère via `uvx` (recommandée)
 
-```bash
-git clone https://github.com/jmtanguy/DroitFrancaisMCP.git
-cd DroitFrancaisMCP
+Aucune installation préalable. [`uv`](https://docs.astral.sh/uv/) télécharge le paquet, l'exécute dans un environnement isolé, puis nettoie.
+
+```json
+{
+  "mcpServers": {
+    "droit-francais": {
+      "command": "uvx",
+      "args": ["droit-francais-mcp"],
+      "env": {
+        "PISTE_CLIENT_ID": "votre_client_id",
+        "PISTE_CLIENT_SECRET": "votre_client_secret"
+      }
+    }
+  }
+}
 ```
 
-Ou télécharger le ZIP de ce projet.
+### Option 2 — Installation persistante via `pipx`
 
-### 2. Installation
+```bash
+pipx install droit-francais-mcp
+```
 
-Exécuter le script d’installation correspondant à votre système d’exploitation :
+Puis dans `claude_desktop_config.json` :
 
-- Windows : install.ps1
-- macOS / Linux : install.sh
+```json
+{
+  "mcpServers": {
+    "droit-francais": {
+      "command": "droit-francais-mcp",
+      "env": {
+        "PISTE_CLIENT_ID": "votre_client_id",
+        "PISTE_CLIENT_SECRET": "votre_client_secret"
+      }
+    }
+  }
+}
+```
 
-Ces scripts effectuent automatiquement les opérations suivantes :
+### Option 3 — Installation depuis le source (développeurs)
 
-- 📦 Création d’un environnement virtuel Python
-- 🔽 Installation de l’ensemble des dépendances nécessaires
-- ⚙️ Configuration du client Claude Desktop pour qu’il utilise ce serveur MCP
+```bash
+git clone https://github.com/joachimBrindeau/droit-francais-mcp.git
+cd droit-francais-mcp
+
+# Avec uv (recommandé — résolution + install ~10× plus rapide que pip)
+uv sync --extra dev
+
+# Ou avec pip
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+
+make test                          # tests offline (intégration sautés sans .env)
+```
+
+Le serveur peut alors être lancé via `droit-francais-mcp`,
+`python -m droit_francais_mcp`, ou `fastmcp run` (qui lit `fastmcp.json`).
+
+### Option 4 — `fastmcp run` avec `fastmcp.json`
+
+Ce dépôt fournit un `fastmcp.json` à la racine. Avec [FastMCP CLI](https://gofastmcp.com/)
+installé :
+
+```bash
+fastmcp run    # détecte fastmcp.json automatiquement
+```
+
+C'est utile pour le dev local quand on veut tester des modifications sans
+réinstaller.
 
 ---
 

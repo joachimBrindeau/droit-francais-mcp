@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Client OAuth 2.0 partagé pour les API PISTE (Légifrance + JudiLibre).
 
@@ -9,7 +8,7 @@ Licensed under the MIT License (see LICENSE file)
 
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import requests
 from dotenv import load_dotenv
@@ -38,7 +37,7 @@ class PisteOAuthClient:
     en concaténant `self.base_url` avec leur chemin spécifique.
     """
 
-    _API_LABEL: str = "PISTE"  # surcharger dans les sous-classes pour les messages d'erreur
+    API_LABEL: str = "PISTE"  # surcharger dans les sous-classes pour les messages d'erreur
 
     def __init__(self, sandbox: bool = True):
         """
@@ -74,8 +73,8 @@ class PisteOAuthClient:
                 "Consultez .env.example pour un exemple de configuration."
             )
 
-        self.access_token: Optional[str] = None
-        self.token_expires_at: Optional[datetime] = None
+        self.access_token: str | None = None
+        self.token_expires_at: datetime | None = None
 
     def get_access_token(self) -> str:
         """
@@ -122,7 +121,7 @@ class PisteOAuthClient:
             return access_token
 
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Erreur lors de l'obtention du token: {e}")
+            raise Exception(f"Erreur lors de l'obtention du token {self.API_LABEL}: {e}")
 
     def _get_api_headers(self) -> Dict[str, str]:
         """En-têtes standard pour les appels API PISTE authentifiés."""
@@ -138,10 +137,10 @@ class PisteOAuthClient:
         method: str,
         url: str,
         *,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        data: Optional[Any] = None,
+        headers: Dict[str, str] | None = None,
+        params: Dict[str, Any] | None = None,
+        json: Dict[str, Any] | None = None,
+        data: Any | None = None,
     ) -> requests.Response:
         """
         Appel HTTP authentifié avec timeout standard.

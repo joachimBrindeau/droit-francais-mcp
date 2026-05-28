@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Vulnérabilité de sécurité
+    url: https://github.com/joachimBrindeau/droit-francais-mcp/security/advisories/new
+    about: Signaler une faille de sécurité via un advisory privé (ne pas ouvrir d'issue publique).
+  - name: ❓ Question d'usage
+    url: https://github.com/joachimBrindeau/droit-francais-mcp/discussions
+    about: Poser une question sur l'utilisation, la configuration ou la migration depuis une autre version.

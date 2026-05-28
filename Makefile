@@ -1,7 +1,7 @@
 # Makefile pour DroitFrancaisMCP
 # Simplifie les tâches courantes de développement
 
-.PHONY: help install install-dev test lint format clean run security update
+.PHONY: help install install-dev lock test test-quick lint format format-check security clean run update init version check-all
 
 # Couleurs pour l'affichage
 RED=\033[0;31m
@@ -14,15 +14,28 @@ help:  ## Afficher cette aide
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
 
-install:  ## Installer les dépendances de production
-	@echo "$(GREEN)Installation des dépendances de production...$(NC)"
-	pip install -r requirements.txt
+install:  ## Installer les dépendances de production (uv si dispo, sinon pip)
+	@echo "$(GREEN)Installation depuis pyproject.toml...$(NC)"
+	@if command -v uv >/dev/null 2>&1; then \
+		uv pip install . ; \
+	else \
+		pip install . ; \
+	fi
 	@echo "$(GREEN)✓ Installation terminée$(NC)"
 
-install-dev:  ## Installer les dépendances de développement
-	@echo "$(GREEN)Installation des dépendances de développement...$(NC)"
-	pip install -r requirements.txt -r requirements-dev.txt
+install-dev:  ## Installer en mode éditable avec extras dev (uv si dispo)
+	@echo "$(GREEN)Installation en mode éditable avec extras dev...$(NC)"
+	@if command -v uv >/dev/null 2>&1; then \
+		uv sync --extra dev ; \
+	else \
+		pip install -e ".[dev]" ; \
+	fi
 	@echo "$(GREEN)✓ Installation terminée$(NC)"
+
+lock:  ## Régénérer uv.lock (commit le fichier après modification de pyproject.toml)
+	@echo "$(GREEN)Génération du lockfile uv...$(NC)"
+	uv lock
+	@echo "$(GREEN)✓ uv.lock à jour$(NC)"
 
 test:  ## Lancer les tests
 	@echo "$(GREEN)Lancement des tests...$(NC)"
@@ -34,36 +47,29 @@ test-quick:  ## Lancer les tests sans coverage
 	pytest -v
 	@echo "$(GREEN)✓ Tests terminés$(NC)"
 
-lint:  ## Vérifier la qualité du code
+lint:  ## Vérifier la qualité du code (ruff + mypy)
 	@echo "$(GREEN)Vérification du code...$(NC)"
-	@echo "$(YELLOW)→ Flake8$(NC)"
-	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+	@echo "$(YELLOW)→ ruff check$(NC)"
+	ruff check src tests
 	@echo "$(YELLOW)→ MyPy$(NC)"
-	mypy --install-types --non-interactive --ignore-missing-imports . || true
+	mypy --install-types --non-interactive --ignore-missing-imports src || true
 	@echo "$(GREEN)✓ Vérification terminée$(NC)"
 
-format:  ## Formater le code avec Black et isort
+format:  ## Formater le code avec ruff (lint --fix + format)
 	@echo "$(GREEN)Formatage du code...$(NC)"
-	@echo "$(YELLOW)→ Black$(NC)"
-	black --line-length 100 .
-	@echo "$(YELLOW)→ isort$(NC)"
-	isort .
+	ruff check --fix src tests
+	ruff format src tests
 	@echo "$(GREEN)✓ Formatage terminé$(NC)"
 
 format-check:  ## Vérifier le formatage sans modifier
 	@echo "$(GREEN)Vérification du formatage...$(NC)"
-	black --check --line-length 100 .
-	isort --check-only .
+	ruff format --check src tests
 	@echo "$(GREEN)✓ Formatage OK$(NC)"
 
-security:  ## Vérifier les vulnérabilités de sécurité
+security:  ## Vérifier les vulnérabilités (ruff S + pip-audit)
 	@echo "$(GREEN)Scan de sécurité...$(NC)"
-	@echo "$(YELLOW)→ Safety (dépendances)$(NC)"
-	safety check || true
-	@echo "$(YELLOW)→ Bandit (code)$(NC)"
-	bandit -r . -f json -o bandit-report.json || true
-	bandit -r . || true
+	ruff check --select S src tests
+	pip-audit || true
 	@echo "$(GREEN)✓ Scan terminé$(NC)"
 
 clean:  ## Nettoyer les fichiers temporaires
@@ -78,7 +84,7 @@ clean:  ## Nettoyer les fichiers temporaires
 
 run:  ## Lancer le serveur MCP
 	@echo "$(GREEN)Démarrage du serveur MCP...$(NC)"
-	python3 droit_francais_MCP.py
+	python3 -m droit_francais_mcp
 
 update:  ## Mettre à jour les dépendances
 	@echo "$(GREEN)Mise à jour des dépendances...$(NC)"
@@ -86,7 +92,7 @@ update:  ## Mettre à jour les dépendances
 	@echo ""
 	@echo "$(YELLOW)Pour mettre à jour un package:$(NC)"
 	@echo "  pip install --upgrade <package>"
-	@echo "  Puis mettre à jour requirements.txt"
+	@echo "  Puis ajuster les bornes de version dans pyproject.toml"
 
 check-all: format lint test security  ## Tout vérifier (format, lint, test, security)
 	@echo "$(GREEN)✓ Toutes les vérifications sont terminées !$(NC)"
@@ -99,10 +105,14 @@ init:  ## Initialiser l'environnement de développement
 	@echo "  .venv\\Scripts\\activate     (Windows)"
 	@echo ""
 	@echo "$(YELLOW)Puis installez les dépendances :$(NC)"
-	@echo "  make install-dev"
+	@echo "  make install-dev   # installe en mode éditable avec extras [dev]"
+	@echo ""
+	@echo "$(YELLOW)Pour les utilisateurs finaux (sans clone du dépôt) :$(NC)"
+	@echo "  uvx droit-francais-mcp                # exécution éphémère"
+	@echo "  pipx install droit-francais-mcp       # installation persistante"
 
 
-version:  ## Afficher la version
-	@python3 -c "from __version__ import __version__, __author__; print(f'Version: {__version__}\nAuteur: {__author__}')"
+version:  ## Afficher la version (source unique: pyproject.toml)
+	@python3 -c "from importlib.metadata import version, metadata; m = metadata('droit-francais-mcp'); print(f'Version: {version(\"droit-francais-mcp\")}\nAuteur: {m.get(\"Author\") or m.get(\"Author-email\") or \"n/c\"}')"
 
 .DEFAULT_GOAL := help

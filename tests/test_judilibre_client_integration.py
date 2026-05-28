@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Tests simples pour l'API JudiLibre.
 Ces tests utilisent l'API sandbox et nécessitent des credentials valides dans .env
@@ -33,7 +32,7 @@ Pour exécuter les tests:
 
 import pytest
 
-from api_judilibre import JudilibreAPI
+from droit_francais_mcp.judilibre.client import JudilibreAPI
 
 # Marquer tous les tests comme tests d'intégration car ils appellent l'API réelle
 pytestmark = pytest.mark.integration
@@ -143,7 +142,9 @@ def test_search_with_chamber_soc(api):
     """Test une recherche dans la chambre sociale avec la clé correcte"""
 
     results = api.search(
-        query="licenciement", chamber=["soc"], page_size=5  # Utilisation de la CLÉ correcte
+        query="licenciement",
+        chamber=["soc"],
+        page_size=5,  # Utilisation de la CLÉ correcte
     )
 
     assert results is not None

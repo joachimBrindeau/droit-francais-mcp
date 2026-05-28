@@ -1,0 +1,84 @@
+name: 🐛 Bug report
+description: Signaler un comportement inattendu de droit-francais-mcp
+title: "[bug] "
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce bug.
+        Pour les vulnérabilités de sécurité, voir [SECURITY.md](../../blob/main/SECURITY.md).
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Sortie de `pip show droit-francais-mcp` ou `python -c 'from droit_francais_mcp import __version__; print(__version__)'`"
+      placeholder: "1.3.0"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Version Python
+      description: "Sortie de `python --version`"
+      placeholder: "Python 3.12.4"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Système d'exploitation
+      placeholder: "macOS 14.5 / Ubuntu 24.04 / Windows 11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: client
+    attributes:
+      label: Client MCP utilisé
+      description: "Claude Desktop, Cursor, autre ? Quel est l'extrait de configuration JSON ?"
+      placeholder: "Claude Desktop 0.9.x, command: uvx, args: ['droit-francais-mcp']"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du bug
+      description: "Quel est le comportement attendu, et qu'observez-vous à la place ?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Étapes de reproduction
+      description: "Le code, la commande ou la séquence d'appels qui déclenche le bug."
+      placeholder: |
+        1. ...
+        2. ...
+        3. Observe : ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Traceback
+      description: "Coller les logs pertinents (stderr du serveur MCP, messages d'erreur côté client). Censurer les credentials."
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Vérifications préliminaires
+      options:
+        - label: "J'ai cherché si ce bug avait déjà été signalé."
+          required: true
+        - label: "J'utilise une version supportée (cf. SECURITY.md)."
+          required: true
+        - label: "J'ai retiré tout credential des logs / extraits."
+          required: true
