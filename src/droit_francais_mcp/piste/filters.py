@@ -33,7 +33,7 @@ def recursive_filter(
         return None
 
     if isinstance(x, dict):
-        cleaned: dict = {}
+        cleaned: dict[str, Any] = {}
         for k, v in x.items():
             if not v:
                 continue
