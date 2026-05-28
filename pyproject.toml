@@ -69,7 +69,7 @@ line-length = 100
 target-version = ["py38", "py39", "py310", "py311"]
 
 [tool.pytest.ini_options]
-testpaths = ["."]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -78,7 +78,6 @@ addopts = [
     "--tb=short",
     "--strict-markers",
     "--color=yes",
-    "--ignore=test_jupyter.py",
 ]
 markers = [
     "integration: Tests d'intégration (nécessitent des clés API valides)",
