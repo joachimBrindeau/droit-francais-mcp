@@ -1,0 +1,43 @@
+name: ✨ Feature request
+description: Proposer une nouvelle fonctionnalité ou amélioration
+title: "[feature] "
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème à résoudre
+      description: "Quel est le cas d'usage concret qui motive cette feature ?"
+      placeholder: "En tant que <utilisateur>, je veux <action> afin de <résultat attendu>."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solution proposée
+      description: "À quoi ressemblerait l'API ou le comportement idéal ?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
+      description: "Y a-t-il un workaround existant ? Pourquoi est-il insuffisant ?"
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Périmètre estimé
+      description: "Nouveau tool MCP, modification d'un client existant, nouvelle ressource, intégration tierce ?"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Vérifications
+      options:
+        - label: "J'ai cherché si cette feature avait déjà été demandée ou rejetée."
+          required: true
+        - label: "La feature est compatible avec les CGU des API PISTE (Légifrance / JudiLibre)."
+          required: true
