@@ -34,36 +34,29 @@ test-quick:  ## Lancer les tests sans coverage
 	pytest -v
 	@echo "$(GREEN)✓ Tests terminés$(NC)"
 
-lint:  ## Vérifier la qualité du code
+lint:  ## Vérifier la qualité du code (ruff + mypy)
 	@echo "$(GREEN)Vérification du code...$(NC)"
-	@echo "$(YELLOW)→ Flake8$(NC)"
-	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+	@echo "$(YELLOW)→ ruff check$(NC)"
+	ruff check src tests
 	@echo "$(YELLOW)→ MyPy$(NC)"
-	mypy --install-types --non-interactive --ignore-missing-imports . || true
+	mypy --install-types --non-interactive --ignore-missing-imports src || true
 	@echo "$(GREEN)✓ Vérification terminée$(NC)"
 
-format:  ## Formater le code avec Black et isort
+format:  ## Formater le code avec ruff (lint --fix + format)
 	@echo "$(GREEN)Formatage du code...$(NC)"
-	@echo "$(YELLOW)→ Black$(NC)"
-	black --line-length 100 .
-	@echo "$(YELLOW)→ isort$(NC)"
-	isort .
+	ruff check --fix src tests
+	ruff format src tests
 	@echo "$(GREEN)✓ Formatage terminé$(NC)"
 
 format-check:  ## Vérifier le formatage sans modifier
 	@echo "$(GREEN)Vérification du formatage...$(NC)"
-	black --check --line-length 100 .
-	isort --check-only .
+	ruff format --check src tests
 	@echo "$(GREEN)✓ Formatage OK$(NC)"
 
-security:  ## Vérifier les vulnérabilités de sécurité
+security:  ## Vérifier les vulnérabilités (ruff S + pip-audit)
 	@echo "$(GREEN)Scan de sécurité...$(NC)"
-	@echo "$(YELLOW)→ Safety (dépendances)$(NC)"
-	safety check || true
-	@echo "$(YELLOW)→ Bandit (code)$(NC)"
-	bandit -r . -f json -o bandit-report.json || true
-	bandit -r . || true
+	ruff check --select S src tests
+	pip-audit || true
 	@echo "$(GREEN)✓ Scan terminé$(NC)"
 
 clean:  ## Nettoyer les fichiers temporaires
@@ -78,7 +71,7 @@ clean:  ## Nettoyer les fichiers temporaires
 
 run:  ## Lancer le serveur MCP
 	@echo "$(GREEN)Démarrage du serveur MCP...$(NC)"
-	python3 droit_francais_MCP.py
+	python3 -m droit_francais_mcp
 
 update:  ## Mettre à jour les dépendances
 	@echo "$(GREEN)Mise à jour des dépendances...$(NC)"
@@ -99,7 +92,11 @@ init:  ## Initialiser l'environnement de développement
 	@echo "  .venv\\Scripts\\activate     (Windows)"
 	@echo ""
 	@echo "$(YELLOW)Puis installez les dépendances :$(NC)"
-	@echo "  make install-dev"
+	@echo "  make install-dev   # installe en mode éditable avec extras [dev]"
+	@echo ""
+	@echo "$(YELLOW)Pour les utilisateurs finaux (sans clone du dépôt) :$(NC)"
+	@echo "  uvx droit-francais-mcp                # exécution éphémère"
+	@echo "  pipx install droit-francais-mcp       # installation persistante"
 
 
 version:  ## Afficher la version (source unique: pyproject.toml)

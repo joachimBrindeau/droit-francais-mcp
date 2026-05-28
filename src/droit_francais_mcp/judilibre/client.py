@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Client pour l'API JudiLibre via PISTE.
 Documentation de l'API JudiLibre : https://piste.gouv.fr/api-judilibre/
@@ -12,7 +11,7 @@ Remarques :
    et d’outils d’intelligence artificielle.
 """
 
-from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
+from typing import Any, ClassVar, Dict, FrozenSet, List
 
 import requests
 
@@ -43,25 +42,25 @@ class JudilibreAPI(PisteOAuthClient):
 
     def search(
         self,
-        query: Optional[str] = None,
-        field: Optional[List[str]] = None,
+        query: str | None = None,
+        field: List[str] | None = None,
         operator: str = "and",
-        type: Optional[List[str]] = None,
-        theme: Optional[List[str]] = None,
-        chamber: Optional[List[str]] = None,
-        formation: Optional[List[str]] = None,
-        jurisdiction: Optional[List[str]] = None,
-        location: Optional[List[str]] = None,
-        publication: Optional[List[str]] = None,
-        solution: Optional[List[str]] = None,
-        date_start: Optional[str] = None,
-        date_end: Optional[str] = None,
+        type: List[str] | None = None,
+        theme: List[str] | None = None,
+        chamber: List[str] | None = None,
+        formation: List[str] | None = None,
+        jurisdiction: List[str] | None = None,
+        location: List[str] | None = None,
+        publication: List[str] | None = None,
+        solution: List[str] | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
         sort: str = "scorepub",
         order: str = "desc",
         page_size: int = 50,
         page: int = 0,
         resolve_references: bool = True,
-        withFileOfType: Optional[List[str]] = None,
+        withFileOfType: List[str] | None = None,
         particularInterest: bool = False,
     ) -> Any:
         """
@@ -148,7 +147,7 @@ class JudilibreAPI(PisteOAuthClient):
         self,
         decision_id: str,
         resolve_references: bool = False,
-        query: Optional[str] = None,
+        query: str | None = None,
         operator: str = "and",
     ) -> Any:
         """
@@ -191,10 +190,10 @@ class JudilibreAPI(PisteOAuthClient):
 
     def taxonomy(
         self,
-        taxonomy_id: Optional[str] = None,
-        key: Optional[str] = None,
-        value: Optional[str] = None,
-        context_value: Optional[str] = None,
+        taxonomy_id: str | None = None,
+        key: str | None = None,
+        value: str | None = None,
+        context_value: str | None = None,
     ) -> Any:
         """
         Récupère les taxonomies (couples clé/valeur) employées par la recherche
@@ -256,7 +255,7 @@ class JudilibreAPI(PisteOAuthClient):
                 )
             raise Exception(f"Erreur lors de la récupération des taxonomies: {e}")
 
-    def clean(self, x: Any) -> Optional[Any]:
+    def clean(self, x: Any) -> Any | None:
         """
         Nettoie une réponse JudiLibre via le helper partagé `recursive_filter`.
         """

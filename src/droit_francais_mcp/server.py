@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 🏛️ Serveur MCP de requête aux API publiques Légifrance et Judilibre
 
@@ -15,7 +14,7 @@ import copy
 import logging
 import sys
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, Type, TypeVar
 
 from fastmcp import FastMCP
 
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 _init_errors: Dict[str, str] = {}
 
 
-def _safe_init(cls: Type[Any], label: str, key: str) -> Optional[Any]:
+def _safe_init(cls: Type[Any], label: str, key: str) -> Any | None:
     """
     Instancie un client API en mode production en interceptant les erreurs
     d'initialisation pour permettre au serveur MCP de démarrer même si une API
@@ -62,8 +61,8 @@ except Exception as e:
     logger.error(f"Échec de l'initialisation du serveur MCP: {e}")
     raise
 
-legifranceapi: Optional[LegifranceAPI] = _safe_init(LegifranceAPI, "LegiFrance", "legifrance")
-judilibreapi: Optional[JudilibreAPI] = _safe_init(JudilibreAPI, "Judilibre", "judilibre")
+legifranceapi: LegifranceAPI | None = _safe_init(LegifranceAPI, "LegiFrance", "legifrance")
+judilibreapi: JudilibreAPI | None = _safe_init(JudilibreAPI, "Judilibre", "judilibre")
 
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -253,12 +252,12 @@ def rechercher_legifrance(
     fond: str = "ALL",
     type_champ: str = "ALL",
     type_recherche: str = "TOUS_LES_MOTS_DANS_UN_CHAMP",
-    code: Optional[str] = None,
-    date_debut: Optional[str] = None,
-    date_fin: Optional[str] = None,
+    code: str | None = None,
+    date_debut: str | None = None,
+    date_fin: str | None = None,
     page: int = 0,
     page_taille: int = 20,
-    tri: Optional[str] = "PERTINENCE",
+    tri: str | None = "PERTINENCE",
     operateur: str = "ET",
 ) -> Any:
     """
@@ -369,10 +368,10 @@ def consulter_legifrance(id: str) -> Any:
     on_error_return={"erreur": "Erreur taxonomie"},
 )
 def obtenir_taxonomie_judilibre(
-    taxonomy_id: Optional[str] = None,
-    key: Optional[str] = None,
-    value: Optional[str] = None,
-    context_value: Optional[str] = None,
+    taxonomy_id: str | None = None,
+    key: str | None = None,
+    value: str | None = None,
+    context_value: str | None = None,
 ) -> Any:
     """
     Récupère les valeurs valides pour les filtres de recherche Judilibre (juridictions, chambres, solutions, etc.).
@@ -417,15 +416,15 @@ def obtenir_taxonomie_judilibre(
     on_error_return="Erreur lors de la recherche Judilibre",
 )
 def rechercher_jurisprudence_judilibre(
-    recherche: Optional[str] = None,
-    juridiction: Optional[str] = None,
-    localisation: Optional[str] = None,
-    chambre: Optional[str] = None,
-    type_decision: Optional[str] = None,
-    theme: Optional[str] = None,
-    solution: Optional[str] = None,
-    date_debut: Optional[str] = None,
-    date_fin: Optional[str] = None,
+    recherche: str | None = None,
+    juridiction: str | None = None,
+    localisation: str | None = None,
+    chambre: str | None = None,
+    type_decision: str | None = None,
+    theme: str | None = None,
+    solution: str | None = None,
+    date_debut: str | None = None,
+    date_fin: str | None = None,
     tri: str = "scorepub",
     ordre: str = "desc",
     nombre_resultats: int = 20,

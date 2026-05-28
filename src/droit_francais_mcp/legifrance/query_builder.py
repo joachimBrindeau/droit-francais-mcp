@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Générateur de requêtes pour l'API Légifrance
 Basé sur SearchRequestDTO de la documentation Swagger
@@ -13,7 +12,7 @@ Remarques :
 """
 
 import json
-from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
+from typing import Any, ClassVar, Dict, FrozenSet, List
 
 
 class LegifranceQueryBuilder:
@@ -273,7 +272,7 @@ class LegifranceQueryBuilder:
         return fond in cls.DATE_FILTER_FACETTES
 
     @classmethod
-    def date_filter_facette(cls, fond: str) -> Optional[str]:
+    def date_filter_facette(cls, fond: str) -> str | None:
         """Renvoie la facette de date utilisée par le fond, ou `None`."""
         return cls.DATE_FILTER_FACETTES.get(fond)
 
@@ -489,8 +488,8 @@ class LegifranceQueryBuilder:
         valeur: str,
         type_recherche: str = "TOUS_LES_MOTS_DANS_UN_CHAMP",
         operateur: str = "ET",
-        proximite: Optional[int] = None, # Nombre maximum de mots entre les termes recherchés,
-        criteres: Optional[List[Dict]] = None,
+        proximite: int | None = None, # Nombre maximum de mots entre les termes recherchés,
+        criteres: List[Dict] | None = None,
     ) -> Dict:
         """
         Crée un critère de recherche (objet CritereDTO dans l'API Légifrance).
@@ -715,7 +714,7 @@ class LegifranceQueryBuilder:
         return self
 
     def add_dates(
-        self, start_date: str, end_date: Optional[str] = None
+        self, start_date: str, end_date: str | None = None
     ) -> "LegifranceQueryBuilder":
         """
         Ajoute un filtre par période de dates (objet FiltreDTO avec DatePeriod dans l'API Légifrance).
@@ -850,7 +849,7 @@ class LegifranceQueryBuilder:
         self.query["recherche"]["operateur"] = operator
         return self
 
-    def set_sort(self, sort: str, second_sort: Optional[str] = None) -> "LegifranceQueryBuilder":
+    def set_sort(self, sort: str, second_sort: str | None = None) -> "LegifranceQueryBuilder":
         """
         Configure le tri des résultats (selon RechercheSpecifiqueDTO de l'API Légifrance).
 

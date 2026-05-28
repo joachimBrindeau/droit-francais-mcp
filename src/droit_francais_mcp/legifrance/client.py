@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Client pour l'API Légifrance via PISTE.
 Documentation de l'API Légifrance : https://piste.gouv.fr/api-dila-legifrance/
@@ -12,8 +11,9 @@ Remarques :
    et d’outils d’intelligence artificielle.
 """
 
+import contextlib
 from datetime import date
-from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
+from typing import Any, ClassVar, Dict, FrozenSet, List
 
 import requests
 
@@ -57,27 +57,25 @@ class LegifranceAPI(PisteOAuthClient):
             error_msg = f"Erreur HTTP {e.response.status_code} lors du ping"
             if e.response.status_code == 403:
                 error_msg += f"\n⚠️ {ERR_403_MESSAGE}"
-            try:
+            with contextlib.suppress(Exception):
                 error_msg += f"\nRéponse: {e.response.text[:200]}"
-            except Exception:
-                pass
             raise Exception(error_msg)
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors du ping: {e}")
 
     def search(
         self,
-        query: Optional[str] = None,
-        fond: Optional[str] = "ALL",
+        query: str | None = None,
+        fond: str | None = "ALL",
         field_type: str = "ALL",
         search_type: str = "TOUS_LES_MOTS_DANS_UN_CHAMP",
-        code: Optional[str] = None,
-        filters: Optional[Dict[str, List[str]]] = None,
-        date_start: Optional[str] = None,
-        date_end: Optional[str] = None,
+        code: str | None = None,
+        filters: Dict[str, List[str]] | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
         page_number: int = 0,
         page_size: int = 10,
-        sort: Optional[str] = None,
+        sort: str | None = None,
         operator: str = "ET",
         advanced_search: bool = False,
         clean: bool = True,
@@ -240,7 +238,7 @@ class LegifranceAPI(PisteOAuthClient):
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors de la récupération de l'article: {e}")
 
-    def clean(self, x: Any) -> Optional[Any]:
+    def clean(self, x: Any) -> Any | None:
         """
         Nettoie une réponse Légifrance via le helper partagé `recursive_filter`.
         """

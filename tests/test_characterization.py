@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Tests de caractérisation MCP — pins comportementaux pour la couche serveur.
 
@@ -96,7 +95,7 @@ def test_init_errors_dict_exists() -> None:
 
 def test_safe_init_captures_exception_message() -> None:
     """_safe_init doit capturer l'exception et la stocker dans _init_errors."""
-    from droit_francais_mcp.server import _safe_init, _init_errors
+    from droit_francais_mcp.server import _init_errors, _safe_init
 
     class _Boom:
         def __init__(self, sandbox: bool = True) -> None:  # noqa: D401
@@ -163,16 +162,16 @@ def test_code_fonds_frozenset() -> None:
     """CODE_FONDS doit contenir exactement les fonds acceptant TEXT_NOM_CODE."""
     from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
 
-    assert LegifranceQueryBuilder.CODE_FONDS == frozenset({"CODE_ETAT", "CODE_DATE"})
+    assert frozenset({"CODE_ETAT", "CODE_DATE"}) == LegifranceQueryBuilder.CODE_FONDS
 
 
 def test_vigueur_default_fonds_frozenset() -> None:
     """VIGUEUR_DEFAULT_FONDS doit lister les fonds où ARTICLE_LEGAL_STATUS=VIGUEUR est imposé par défaut."""
     from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
 
-    assert LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS == frozenset({
+    assert frozenset({
         "JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT",
-    })
+    }) == LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS
 
 
 # ----------------------------------------------------------------------------

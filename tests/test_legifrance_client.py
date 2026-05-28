@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Tests simples pour l'API Légifrance.
 Ces tests utilisent l'API sandbox et nécessitent des credentials valides dans .env
