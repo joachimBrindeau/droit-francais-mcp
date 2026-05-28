@@ -122,20 +122,20 @@ def test_search_in_title(api):
 
     assert results is not None
 
+
 def test_search_with_date(api):
     """Test la recherche avec filtre de dates - utilise JORF car CODE_ETAT ne supporte pas les filtres de dates"""
 
-    results = api.search(query="environnement", fond="JORF", page_size=5, date_end="2022-01-01" )
+    results = api.search(query="environnement", fond="JORF", page_size=5, date_end="2022-01-01")
 
     assert results is not None
+
 
 def test_article_legiarti(api):
     """Test la récupération d'un article de loi (LEGIARTI)"""
 
     # D'abord faire une recherche pour obtenir un ID valide
-    search_results = api.search(
-        query="mariage", fond="CODE_ETAT", code="Code civil", page_size=1
-    )
+    search_results = api.search(query="mariage", fond="CODE_ETAT", code="Code civil", page_size=1)
 
     # Si on a des résultats, essayer de récupérer plus de détails
     # Note: cet exemple peut nécessiter d'ajuster selon la structure réelle des résultats
@@ -146,34 +146,41 @@ def test_article_legitext(api):
     """Test la récupération d'un texte légal (LEGITEXT)"""
     result = api.consult("LEGITEXT000006070721")
     assert result is not None
-        
+
+
 def test_article_legiarticle(api):
     result = api.consult("LEGIARTI000006307920")
-    assert result is not None 
+    assert result is not None
+
 
 def test_article_juritext(api):
     result = api.consult("JURITEXT000037999394")
-    assert result is not None  
+    assert result is not None
+
 
 def test_article_CNILTEXT(api):
     result = api.consult("CNILTEXT000017652361")
-    assert result is not None  
+    assert result is not None
+
 
 def test_article_KALITEXT(api):
     result = api.consult("KALITEXT000005677408")
-    assert result is not None  
+    assert result is not None
+
 
 def test_article_KALIARTI(api):
     result = api.consult("KALIARTI000005833238")
-    assert result is not None  
+    assert result is not None
+
 
 def test_article_ACCOTEXT(api):
     result = api.consult("ACCOTEXT000037731479")
-    assert result is not None  
+    assert result is not None
+
 
 def test_article_JORF(api):
     result = api.consult("JORFTEXT000033736934")
-    assert result is not None  
+    assert result is not None
 
 
 def test_search_invalid_fond(api):

@@ -25,10 +25,21 @@ class JudilibreAPI(PisteOAuthClient):
     """
 
     API_LABEL = "Judilibre"
-    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
-        "text", "id", "jurisdiction", "chamber", "formation", "type", "theme",
-        "publication", "decision_date", "solution", "score",
-    })
+    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "text",
+            "id",
+            "jurisdiction",
+            "chamber",
+            "formation",
+            "type",
+            "theme",
+            "publication",
+            "decision_date",
+            "solution",
+            "score",
+        }
+    )
     MAX_DEPTH: ClassVar[int] = 5
 
     DEFAULT_JURISDICTIONS: ClassVar[tuple[str, ...]] = ("cc", "ca", "tj", "tcom")

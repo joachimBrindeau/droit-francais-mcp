@@ -19,24 +19,53 @@ class LegifranceQueryBuilder:
     """Générateur de requêtes pour l'API Légifrance"""
 
     # Valeurs valides pour le type de recherche
-    TYPE_RECHERCHE: ClassVar[FrozenSet[str]] = frozenset({
-        "UN_DES_MOTS",
-        "EXACTE",
-        "TOUS_LES_MOTS_DANS_UN_CHAMP",
-        "AUCUN_DES_MOTS",
-        "AUCUNE_CORRESPONDANCE_A_CETTE_EXPRESSION",
-    })
+    TYPE_RECHERCHE: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "UN_DES_MOTS",
+            "EXACTE",
+            "TOUS_LES_MOTS_DANS_UN_CHAMP",
+            "AUCUN_DES_MOTS",
+            "AUCUNE_CORRESPONDANCE_A_CETTE_EXPRESSION",
+        }
+    )
 
     # Valeurs valides pour le type de champ (descriptions: voir TYPE_CHAMP_DESCRIPTIONS)
-    TYPE_CHAMP: ClassVar[FrozenSet[str]] = frozenset({
-        "ALL", "TITLE", "TABLE", "NOR", "NUM", "ADVANCED_TEXTE_ID",
-        "NUM_DELIB", "NUM_DEC", "NUM_ARTICLE", "ARTICLE", "MINISTERE",
-        "VISA", "NOTICE", "VISA_NOTICE", "TRAVAUX_PREP", "SIGNATURE",
-        "NOTA", "NUM_AFFAIRE", "ABSTRATS", "RESUMES", "TEXTE", "ECLI",
-        "NUM_LOI_DEF", "TYPE_DECISION", "NUMERO_INTERNE", "REF_PUBLI",
-        "RESUME_CIRC", "TEXTE_REF", "TITRE_LOI_DEF", "RAISON_SOCIALE",
-        "MOTS_CLES", "IDCC",
-    })
+    TYPE_CHAMP: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "ALL",
+            "TITLE",
+            "TABLE",
+            "NOR",
+            "NUM",
+            "ADVANCED_TEXTE_ID",
+            "NUM_DELIB",
+            "NUM_DEC",
+            "NUM_ARTICLE",
+            "ARTICLE",
+            "MINISTERE",
+            "VISA",
+            "NOTICE",
+            "VISA_NOTICE",
+            "TRAVAUX_PREP",
+            "SIGNATURE",
+            "NOTA",
+            "NUM_AFFAIRE",
+            "ABSTRATS",
+            "RESUMES",
+            "TEXTE",
+            "ECLI",
+            "NUM_LOI_DEF",
+            "TYPE_DECISION",
+            "NUMERO_INTERNE",
+            "REF_PUBLI",
+            "RESUME_CIRC",
+            "TEXTE_REF",
+            "TITRE_LOI_DEF",
+            "RAISON_SOCIALE",
+            "MOTS_CLES",
+            "IDCC",
+        }
+    )
 
     # Descriptions détaillées des types de champs
     TYPE_CHAMP_DESCRIPTIONS = {
@@ -235,26 +264,39 @@ class LegifranceQueryBuilder:
     }
 
     # Valeurs valides pour le fonds (descriptions: voir FONDS_DESCRIPTIONS)
-    FONDS: ClassVar[FrozenSet[str]] = frozenset({
-        "ALL", "JORF", "CNIL", "CETAT", "JURI", "JUFI", "CONSTIT",
-        "KALI", "CODE_DATE", "CODE_ETAT", "LODA_DATE", "LODA_ETAT",
-        "CIRC", "ACCO",
-    })
+    FONDS: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "ALL",
+            "JORF",
+            "CNIL",
+            "CETAT",
+            "JURI",
+            "JUFI",
+            "CONSTIT",
+            "KALI",
+            "CODE_DATE",
+            "CODE_ETAT",
+            "LODA_DATE",
+            "LODA_ETAT",
+            "CIRC",
+            "ACCO",
+        }
+    )
 
     # Source de vérité unique: quels fonds supportent un filtre par date
     # et quelle facette utiliser. Utilisée par add_dates() ET par la couche MCP
     # (`droit_francais_MCP.rechercher_legifrance`) pour la validation.
     DATE_FILTER_FACETTES: ClassVar[Dict[str, str]] = {
-        "JORF":       "DATE_PUBLICATION",
-        "LODA_DATE":  "DATE_PUBLICATION",
-        "LODA_ETAT":  "DATE_PUBLICATION",
-        "JURI":       "DATE_DECISION",
-        "CETAT":      "DATE_DECISION",
-        "JUFI":       "DATE_DECISION",
-        "CONSTIT":    "DATE_DECISION",
-        "KALI":       "DATE_SIGNATURE",
-        "CIRC":       "DATE_SIGNATURE",
-        "ACCO":       "DATE_SIGNATURE",
+        "JORF": "DATE_PUBLICATION",
+        "LODA_DATE": "DATE_PUBLICATION",
+        "LODA_ETAT": "DATE_PUBLICATION",
+        "JURI": "DATE_DECISION",
+        "CETAT": "DATE_DECISION",
+        "JUFI": "DATE_DECISION",
+        "CONSTIT": "DATE_DECISION",
+        "KALI": "DATE_SIGNATURE",
+        "CIRC": "DATE_SIGNATURE",
+        "ACCO": "DATE_SIGNATURE",
     }
 
     # Fonds qui acceptent le filtre TEXT_NOM_CODE (recherche par nom de code).
@@ -262,9 +304,15 @@ class LegifranceQueryBuilder:
 
     # Fonds pour lesquels la couche client applique par défaut le filtre
     # ARTICLE_LEGAL_STATUS=VIGUEUR (textes actuellement en vigueur).
-    VIGUEUR_DEFAULT_FONDS: ClassVar[FrozenSet[str]] = frozenset({
-        "JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT",
-    })
+    VIGUEUR_DEFAULT_FONDS: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "JORF",
+            "CODE_ETAT",
+            "CODE_DATE",
+            "LODA_DATE",
+            "LODA_ETAT",
+        }
+    )
 
     @classmethod
     def supports_date_filter(cls, fond: str) -> bool:
@@ -399,9 +447,7 @@ class LegifranceQueryBuilder:
             ValueError: Si le fonds spécifié n'est pas valide
         """
         if fond not in self.FONDS:
-            raise ValueError(
-                f"Fonds invalide. Utilisez une des valeurs: {sorted(self.FONDS)}"
-            )
+            raise ValueError(f"Fonds invalide. Utilisez une des valeurs: {sorted(self.FONDS)}")
         self.query["fond"] = fond
         return self
 
@@ -713,9 +759,7 @@ class LegifranceQueryBuilder:
         self.query["recherche"]["filtres"].append(filtre)
         return self
 
-    def add_dates(
-        self, start_date: str, end_date: str | None = None
-    ) -> "LegifranceQueryBuilder":
+    def add_dates(self, start_date: str, end_date: str | None = None) -> "LegifranceQueryBuilder":
         """
         Ajoute un filtre par période de dates (objet FiltreDTO avec DatePeriod dans l'API Légifrance).
 
@@ -724,7 +768,7 @@ class LegifranceQueryBuilder:
         Attention : fond doit etre défini avant d'utiliser cette méthode.
 
         Args:
-           
+
         # La date de recherche est spécifique au fond
         # Une facette principale est généralement admise pour les fonds qui supportent le filtrage
         # La liste est le résultat d'un scan exhaustif des fonds et facettes.
@@ -748,7 +792,7 @@ class LegifranceQueryBuilder:
             end_date (str, optional): Date de fin de la période. optionnel
                 Format: "YYYY-MM-DD" (ex: "2018-01-31")
                 Le format ISO 8601 est requis.
-               
+
         Returns:
             LegifranceQueryBuilder: Instance pour chaînage des méthodes
 
@@ -763,14 +807,16 @@ class LegifranceQueryBuilder:
         # Apply date filter
         if end_date is not None:
             # Comportement normal avec start et end
-            filtre = {"facette": facette_principale, "dates": {"start": start_date, "end": end_date}}
+            filtre = {
+                "facette": facette_principale,
+                "dates": {"start": start_date, "end": end_date},
+            }
         else:
             # Seulement start (comportement par défaut pour ALL ou si end_date n'est pas fourni)
             filtre = {"facette": facette_principale, "dates": {"start": start_date}}
 
         self.query["recherche"]["filtres"].append(filtre)
         return self
-
 
     def set_pagination(
         self, page_number: int = 0, page_size: int = 10, type_pagination: str = "DEFAUT"
@@ -781,7 +827,7 @@ class LegifranceQueryBuilder:
         Args:
             page_number (int, optional): Numéro de la page à consulter.
                 Défaut: 0(première page)
-         
+
 
             page_size (int, optional): Nombre d'éléments par page.
                 Défaut: 10

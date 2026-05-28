@@ -21,9 +21,7 @@ def pytest_configure(config: pytest.Config) -> None:
     load_dotenv(verbose=False)
 
 
-def pytest_collection_modifyitems(
-    config: pytest.Config, items: List[pytest.Item]
-) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: List[pytest.Item]) -> None:
     """Skip les tests `integration` si les credentials PISTE sandbox manquent.
 
     L'utilisateur peut forcer l'exécution avec `-m integration` + des creds

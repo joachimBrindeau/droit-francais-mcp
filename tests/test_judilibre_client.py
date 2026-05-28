@@ -142,7 +142,9 @@ def test_search_with_chamber_soc(api):
     """Test une recherche dans la chambre sociale avec la clé correcte"""
 
     results = api.search(
-        query="licenciement", chamber=["soc"], page_size=5  # Utilisation de la CLÉ correcte
+        query="licenciement",
+        chamber=["soc"],
+        page_size=5,  # Utilisation de la CLÉ correcte
     )
 
     assert results is not None

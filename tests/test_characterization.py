@@ -160,13 +160,15 @@ def test_lazy_accessors_caches_failure(monkeypatch: pytest.MonkeyPatch) -> None:
 # ----------------------------------------------------------------------------
 
 
-EXPECTED_TOOL_NAMES = frozenset({
-    "rechercher_legifrance",
-    "consulter_legifrance",
-    "obtenir_taxonomie_judilibre",
-    "rechercher_jurisprudence_judilibre",
-    "consulter_decision_judilibre",
-})
+EXPECTED_TOOL_NAMES = frozenset(
+    {
+        "rechercher_legifrance",
+        "consulter_legifrance",
+        "obtenir_taxonomie_judilibre",
+        "rechercher_jurisprudence_judilibre",
+        "consulter_decision_judilibre",
+    }
+)
 
 
 def _registered_tool_names(mcp: Any) -> frozenset[str]:
@@ -215,9 +217,18 @@ def test_vigueur_default_fonds_frozenset() -> None:
     """VIGUEUR_DEFAULT_FONDS doit lister les fonds où ARTICLE_LEGAL_STATUS=VIGUEUR est imposé par défaut."""
     from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
 
-    assert frozenset({
-        "JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT",
-    }) == LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS
+    assert (
+        frozenset(
+            {
+                "JORF",
+                "CODE_ETAT",
+                "CODE_DATE",
+                "LODA_DATE",
+                "LODA_ETAT",
+            }
+        )
+        == LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS
+    )
 
 
 # ----------------------------------------------------------------------------
@@ -252,7 +263,9 @@ def test_piste_oauth_client_request_uses_shared_timeout(monkeypatch: pytest.Monk
     # Bypass auth pour le test du wrapper HTTP isolément.
     from droit_francais_mcp.piste.auth import PisteOAuthClient
 
-    with patch.object(PisteOAuthClient, "_get_api_headers", return_value={"Authorization": "Bearer T"}):
+    with patch.object(
+        PisteOAuthClient, "_get_api_headers", return_value={"Authorization": "Bearer T"}
+    ):
         # On ne peut pas instancier PisteOAuthClient sans creds — on lui mock __init__.
         client = PisteOAuthClient.__new__(PisteOAuthClient)
         response = client._request("GET", "https://example.invalid/probe")

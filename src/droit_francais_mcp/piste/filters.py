@@ -51,7 +51,8 @@ def recursive_filter(
         filtered = [
             cleaned_v
             for v in x
-            if v and (cleaned_v := recursive_filter(v, allowed_keys, depth + 1, max_depth)) is not None
+            if v
+            and (cleaned_v := recursive_filter(v, allowed_keys, depth + 1, max_depth)) is not None
         ]
         return filtered if filtered else None
 

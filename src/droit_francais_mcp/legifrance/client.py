@@ -28,11 +28,27 @@ class LegifranceAPI(PisteOAuthClient):
     """
 
     API_LABEL = "Légifrance"
-    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
-        "id", "title", "text", "values", "datePublication", "startDate",
-        "origine", "nature", "natureJuridiction", "solution", "numeroAffaire",
-        "president", "avocats", "titre", "texte", "juridiction", "content",
-    })
+    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset(
+        {
+            "id",
+            "title",
+            "text",
+            "values",
+            "datePublication",
+            "startDate",
+            "origine",
+            "nature",
+            "natureJuridiction",
+            "solution",
+            "numeroAffaire",
+            "president",
+            "avocats",
+            "titre",
+            "texte",
+            "juridiction",
+            "content",
+        }
+    )
     MAX_DEPTH: ClassVar[int] = 8
 
     def __init__(self, sandbox: bool = True):

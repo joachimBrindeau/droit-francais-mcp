@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
 
 
 @mcp.tool
-@safe_mcp_tool("Erreur lors de la recherche Légifrance", on_error_return="Erreur lors de la recherche")
+@safe_mcp_tool(
+    "Erreur lors de la recherche Légifrance", on_error_return="Erreur lors de la recherche"
+)
 def rechercher_legifrance(
     recherche: str,
     fond: str = "ALL",
