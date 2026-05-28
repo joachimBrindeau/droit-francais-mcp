@@ -12,6 +12,7 @@ pytestmark = pytest.mark.unit
 # FastMCP enveloppe les fonctions décorées dans `FunctionResource` ; `.fn`
 # expose la fonction Python originale, ce qui est ce qu'on veut tester.
 ALL_RESOURCES = [
+    resources.context_recherche_juridique.fn,
     resources.documentation_fonds_legifrance.fn,
     resources.documentation_champs_legifrance.fn,
     resources.documentation_types_recherche_legifrance.fn,
@@ -55,5 +56,18 @@ def test_judilibre_chambres_lists_known_chambers() -> None:
 
 
 def test_resource_count_matches_expected() -> None:
-    """Pin du nombre total de ressources exposées (5 legifrance + 7 judilibre = 12)."""
-    assert len(ALL_RESOURCES) == 12
+    """Pin du nombre total de ressources MCP exposées (1 context + 5 legifrance + 7 judilibre = 13)."""
+    assert len(ALL_RESOURCES) == 13
+
+
+def test_context_resource_documents_workflow() -> None:
+    """`legifrance://context` est le guide de workflow lu en début de session."""
+    md = resources.context_recherche_juridique.fn()
+    # Mentions clés pour l'agent
+    for token in (
+        "Workflow",
+        "obtenir_taxonomie_judilibre",
+        "rechercher_legifrance",
+        "ping_legifrance",
+    ):
+        assert token in md, f"Le contexte doit mentionner {token!r}"

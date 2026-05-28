@@ -164,6 +164,7 @@ EXPECTED_TOOL_NAMES = frozenset(
     {
         "rechercher_legifrance",
         "consulter_legifrance",
+        "ping_legifrance",
         "obtenir_taxonomie_judilibre",
         "rechercher_jurisprudence_judilibre",
         "consulter_decision_judilibre",

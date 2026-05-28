@@ -10,6 +10,77 @@ from __future__ import annotations
 from droit_francais_mcp.server import mcp
 
 
+@mcp.resource("legifrance://context")
+def context_recherche_juridique() -> str:
+    """Workflow recommandé pour la recherche juridique avec ce serveur MCP.
+
+    À lire en début de session : l'agent y trouve le pattern type
+    "taxonomy → search → consult" et la façon de composer les outils.
+    """
+    return """
+# Workflow de recherche juridique — droit-francais-mcp
+
+Ce serveur MCP donne accès à deux familles d'API publiques de l'État français :
+
+- **Légifrance** : législation (codes, lois, décrets, JORF, jurisprudence administrative)
+- **JudiLibre** : jurisprudence judiciaire (Cour de cassation, cours d'appel, tribunaux)
+
+## Pattern recommandé
+
+1. **Découverte des valeurs valides** — si l'utilisateur emploie un nom métier
+   (« 1ère chambre civile », « Cour d'appel de Paris ») plutôt qu'un code
+   technique (`civ1`, `ca_paris`), commencer par interroger les ressources
+   `legifrance://documentation/*` ou `judilibre://documentation/*` ou utiliser
+   `obtenir_taxonomie_judilibre`.
+2. **Recherche large** — utiliser `rechercher_legifrance` (textes) ou
+   `rechercher_jurisprudence_judilibre` (décisions) avec les filtres pertinents.
+   Les résultats contiennent des `id` mais pas le texte intégral.
+3. **Consultation ciblée** — pour chaque résultat pertinent, appeler
+   `consulter_legifrance(id=…)` ou `consulter_decision_judilibre(decision_id=…)`
+   pour obtenir le texte complet.
+4. **Diagnostic en cas de problème** — `ping_legifrance` confirme la connectivité
+   et la validité du token OAuth.
+
+## Choix du fond Légifrance
+
+| Question utilisateur | Fond approprié |
+|----------------------|----------------|
+| Article d'un code (Code civil, Code pénal…) | `CODE_ETAT` + `code="…"` |
+| Loi / décret / arrêté | `LODA_ETAT` ou `LODA_DATE` |
+| Journal Officiel | `JORF` |
+| Jurisprudence Cour de cassation (avant 2023) | `JURI` |
+| Décision Conseil d'État | `CETAT` |
+| Décision Conseil Constitutionnel | `CONSTIT` |
+| Convention collective | `KALI` |
+| CNIL | `CNIL` |
+| Aucune préférence / recherche transversale | `ALL` |
+
+## Filtres de date — fonds compatibles
+
+`JORF`, `LODA_DATE`, `LODA_ETAT`, `JURI`, `CETAT`, `JUFI`, `CONSTIT`, `KALI`,
+`CIRC`, `ACCO` acceptent `date_debut`/`date_fin`. Les autres fonds (`ALL`,
+`CODE_*`, `CNIL`) ignorent ces filtres avec un warning.
+
+## Idiomes JudiLibre
+
+- Pour la Cour de cassation, **utiliser les CODES** de chambre (`pl`, `civ1`,
+  `civ2`, `civ3`, `comm`, `soc`, `cr`, …), pas les noms complets.
+- `juridiction` par défaut = toutes (`cc`, `ca`, `tj`, `tcom`).
+- `tri="scorepub"` (défaut) combine pertinence et niveau de publication —
+  préférable à `score` pour la jurisprudence cassationnelle.
+
+## Erreurs fréquentes
+
+- **403 Forbidden** — votre compte PISTE n'est probablement pas abonné à
+  l'API concernée. Vérifier sur https://piste.gouv.fr/.
+- **400 Bad Request sur OAuth** — credentials expirés ou révoqués.
+  Régénérer sur https://piste.gouv.fr/.
+- **« API non initialisée »** — variables d'environnement `PISTE_CLIENT_ID`
+  / `PISTE_CLIENT_SECRET` manquantes. Le message d'erreur inclut le détail
+  capturé à l'init.
+"""
+
+
 @mcp.resource("legifrance://documentation/fonds")
 def documentation_fonds_legifrance() -> str:
     """Fonds de recherche Légifrance disponibles."""

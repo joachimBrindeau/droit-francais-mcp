@@ -11,7 +11,6 @@ Remarques :
    et d’outils d’intelligence artificielle.
 """
 
-import json
 from typing import Any, ClassVar, Dict, FrozenSet, List
 
 
@@ -29,7 +28,7 @@ class LegifranceQueryBuilder:
         }
     )
 
-    # Valeurs valides pour le type de champ (descriptions détaillées : voir droit_francais_mcp.legifrance.descriptions.TYPE_CHAMP_DESCRIPTIONS)
+    # Valeurs valides pour le type de champ (cf. ressource MCP `legifrance://documentation/champs`).
     TYPE_CHAMP: ClassVar[FrozenSet[str]] = frozenset(
         {
             "ALL",
@@ -745,69 +744,3 @@ class LegifranceQueryBuilder:
         if not self.query["fond"]:
             raise ValueError("Le fonds doit être défini")
         return self.query.copy()
-
-    def to_json(self, indent: int = 2) -> str:
-        """
-        Retourne la requête au format JSON.
-
-        Construit la requête avec build() et la sérialise en JSON.
-
-        Args:
-            indent (int, optional): Nombre d'espaces pour l'indentation du JSON.
-                Défaut: 2
-                Utilisez None pour obtenir un JSON compact sans indentation.
-
-        Returns:
-            str: Chaîne JSON représentant la requête de recherche,
-                 prête à être envoyée à l'endpoint /search de l'API Légifrance.
-
-        Raises:
-            ValueError: Si le fonds n'a pas été défini (propagé depuis build())
-
-        Examples:
-            >>> search = LegifranceQueryBuilder()
-            >>> search.set_fond("LODA_DATE")
-            >>> critere = search.create_critere("mariage", "EXACTE")
-            >>> search.add_champ("TITLE", [critere])
-            >>> json_str = search.to_json()
-            >>> print(json_str)
-            {
-              "fond": "LODA_DATE",
-              "recherche": {
-                "champs": [...]
-              }
-            }
-        """
-        return json.dumps(self.build(), indent=indent, ensure_ascii=False)
-
-    def reset(self) -> "LegifranceQueryBuilder":
-        """
-        Remet à zéro le générateur de requêtes.
-
-        Réinitialise toutes les configurations à leurs valeurs par défaut.
-        Utile pour réutiliser le même objet pour construire une nouvelle requête.
-
-        Returns:
-            LegifranceQueryBuilder: Instance réinitialisée pour chaînage des méthodes
-
-        Examples:
-            >>> search = LegifranceQueryBuilder()
-            >>> search.set_fond("LODA_DATE")
-            >>> # ... construire une requête ...
-            >>> search.reset()  # Réinitialise tout
-            >>> search.set_fond("JORF")  # Commence une nouvelle requête
-        """
-        self.query = {
-            "fond": "",
-            "recherche": {
-                "champs": [],
-                "filtres": [],
-                "pageNumber": 1,
-                "pageSize": 50,
-                "operateur": "ET",
-                "sort": "PERTINENCE",
-                "secondSort": "DATE_DESC",
-                "typePagination": "DEFAUT",
-            },
-        }
-        return self

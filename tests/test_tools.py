@@ -18,6 +18,9 @@ from droit_francais_mcp.tools import (
     obtenir_taxonomie_judilibre as _obtenir_taxonomie_judilibre_tool,
 )
 from droit_francais_mcp.tools import (
+    ping_legifrance as _ping_legifrance_tool,
+)
+from droit_francais_mcp.tools import (
     rechercher_jurisprudence_judilibre as _rechercher_jurisprudence_judilibre_tool,
 )
 from droit_francais_mcp.tools import (
@@ -28,6 +31,7 @@ from droit_francais_mcp.tools import (
 # la fonction originale (callable Python normal, idéal pour les tests unitaires).
 rechercher_legifrance = _rechercher_legifrance_tool.fn
 consulter_legifrance = _consulter_legifrance_tool.fn
+ping_legifrance = _ping_legifrance_tool.fn
 obtenir_taxonomie_judilibre = _obtenir_taxonomie_judilibre_tool.fn
 rechercher_jurisprudence_judilibre = _rechercher_jurisprudence_judilibre_tool.fn
 consulter_decision_judilibre = _consulter_decision_judilibre_tool.fn
@@ -41,6 +45,45 @@ def _reset_clients() -> Any:
     srv.reset_clients()
     yield
     srv.reset_clients()
+
+
+# ----------------------------------------------------------------------------
+# ping_legifrance
+# ----------------------------------------------------------------------------
+
+
+def test_ping_legifrance_surfaces_init_error() -> None:
+    """Si l'init du client échoue, le ping retourne un statut d'erreur structuré."""
+
+    class _Boom:
+        def __init__(self, sandbox: bool = False) -> None:
+            raise RuntimeError("creds manquants")
+
+    with patch.object(srv, "LegifranceAPI", _Boom):
+        result = ping_legifrance()
+
+    assert isinstance(result, dict)
+    assert result["status"] == "error"
+    assert "creds manquants" in result["details"]
+
+
+def test_ping_legifrance_returns_ok_on_success() -> None:
+    fake_api = MagicMock()
+    fake_api.ping.return_value = "pong"
+    srv._clients["legifrance"] = fake_api
+
+    assert ping_legifrance() == {"status": "ok", "details": "pong"}
+
+
+def test_ping_legifrance_returns_error_status_on_client_failure() -> None:
+    """Une exception du client est capturée et retournée comme status=error."""
+    fake_api = MagicMock()
+    fake_api.ping.side_effect = RuntimeError("HTTP 503")
+    srv._clients["legifrance"] = fake_api
+
+    result = ping_legifrance()
+    assert result["status"] == "error"
+    assert "HTTP 503" in result["details"]
 
 
 # ----------------------------------------------------------------------------

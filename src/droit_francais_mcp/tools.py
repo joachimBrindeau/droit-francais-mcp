@@ -30,6 +30,38 @@ logger = logging.getLogger(__name__)
 
 @mcp.tool
 @safe_mcp_tool(
+    "Erreur lors du ping Légifrance",
+    on_error_return={"erreur": "Ping Légifrance impossible"},
+)
+def ping_legifrance() -> Any:
+    """
+    Teste la connectivité à l'API Légifrance (OAuth + endpoint /search/ping).
+
+    Diagnostic à utiliser quand le serveur retourne « API non initialisée » ou
+    qu'une recherche échoue : permet de distinguer un problème de credentials
+    (403 / token invalide) d'un problème métier (paramètres de recherche).
+
+    Returns:
+        dict avec `status` ("ok" ou "error") et `details` (texte de la réponse
+        ou message d'erreur). En cas d'API non initialisée, inclut la raison
+        capturée à l'init.
+    """
+    api = get_legifrance_api()
+    if api is None:
+        err = _init_errors.get("legifrance", "raison inconnue")
+        logger.error(f"API Légifrance non initialisée: {err}")
+        return {"status": "error", "details": f"API non initialisée ({err})"}
+
+    try:
+        response = api.ping()
+        return {"status": "ok", "details": response}
+    except Exception as e:
+        # Pas de re-raise : on retourne un statut structuré exploitable.
+        return {"status": "error", "details": str(e)}
+
+
+@mcp.tool
+@safe_mcp_tool(
     "Erreur lors de la recherche Légifrance", on_error_return="Erreur lors de la recherche"
 )
 def rechercher_legifrance(

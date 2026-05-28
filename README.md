@@ -101,6 +101,35 @@ Afin de valider l'accès aux API, vous devez également valider les conditions d
 
 ---
 
+## ⚡ Démarrage rapide (3 minutes)
+
+1. **Prérequis** : Python 3.10+ et un compte [PISTE](https://piste.gouv.fr/).
+2. **Installation** : `uvx droit-francais-mcp` (ou `pipx install droit-francais-mcp`).
+3. **Configuration** : ajouter le bloc JSON ci-dessous à `claude_desktop_config.json`.
+4. **Vérification** : redémarrer Claude Desktop ; l'outil `droit-francais` apparaît
+   dans la liste MCP.
+
+```json
+{
+  "mcpServers": {
+    "droit-francais": {
+      "command": "uvx",
+      "args": ["droit-francais-mcp"],
+      "env": {
+        "PISTE_CLIENT_ID": "votre_id",
+        "PISTE_CLIENT_SECRET": "votre_secret"
+      }
+    }
+  }
+}
+```
+
+Voir la section [Installation](#-installation) pour les détails (autres clients,
+développement local) et [`docs/CAPABILITY_MAP.md`](docs/CAPABILITY_MAP.md) pour
+la liste exhaustive des outils MCP exposés.
+
+---
+
 ## 🚀 Installation
 
 ### Option 1 — Exécution éphémère via `uvx` (recommandée)
