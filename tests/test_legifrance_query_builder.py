@@ -68,6 +68,7 @@ def test_code_fonds_classvar_contents() -> None:
 
 
 def test_vigueur_default_fonds_classvar_contents() -> None:
-    assert frozenset(
-        {"JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT"}
-    ) == LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS
+    assert (
+        frozenset({"JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT"})
+        == LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS
+    )
