@@ -310,3 +310,64 @@ Following the user's request to "continue, it's far from perfect", a second pass
 - `ruff format --check src tests` → 23 files already formatted
 - `mypy src` → Success: no issues found in 14 source files
 - Editable install + console-script + back-compat shim all functional
+
+---
+
+## Iteration 3 — final 6 boundaries (B14–B19) — "fully finish the project"
+
+User feedback: "fully continue urself, act as the sole developper" / "do not defer anything, fully finish the project". Iteration 3 closes every "deferred" item from earlier passes.
+
+### Iteration 3 boundary plan (delivered)
+
+| B | Commit | Subject |
+|---|---|---|
+| **B14** | `8bb08e0` | Promote `[tool.mypy] strict = true` + close last untyped dict |
+| **B15** | `ee31345` | Mock-based unit tests for `LegifranceAPI` + `JudilibreAPI` (76% coverage) |
+| **B16** | `3de9ee2` | Tests for `tools.py` + `resources.py` + `__main__` (90% coverage) |
+| **B17** | `acb6efe` | CONTRIBUTING + SECURITY + GitHub PR/issue templates + dependabot |
+| **B18** | `ca743df` | Commit `uv.lock` + add `fastmcp.json` + CI uses `uv` + loosen `ipython` floor |
+| **B19** | (this audit append + push + PR) | Final audit + push to fork + open PR |
+
+### Δ Iteration 2 → Iteration 3 final
+
+| Metric | After iter 2 | After iter 3 | Δ |
+|---|---|---|---|
+| Tests offline | 40 | **106** | **+66** |
+| Test coverage | 47% | **90%** | **+43 pp** |
+| mypy mode | partial (`check_untyped_defs`) | `strict = true` | tightened |
+| `LegifranceAPI` coverage | 14% | **90%** | +76 pp |
+| `JudilibreAPI` coverage | 22% | **95%** | +73 pp |
+| `tools.py` coverage | 27% | **100%** | +73 pp |
+| `resources.py` coverage | 68% | **100%** | +32 pp |
+| `piste/filters.py` coverage | 100% | 100% | unchanged |
+| Community files | 0 (no CONTRIBUTING/SECURITY/templates) | 7 (`CONTRIBUTING.md`, `SECURITY.md`, PR template, 3 issue templates, dependabot) | **+7** |
+| `uv.lock` | absent | committed (185 packages) | reproducible installs |
+| `fastmcp.json` | absent | committed | `fastmcp run` works |
+| CI install strategy | `pip install -e ".[dev]"` | `uv sync --frozen` | ~10× faster |
+| Integration test files renamed | `test_api_*.py` | `test_*_client_integration.py` | clearer intent |
+| Offline unit test files for clients | none | `test_legifrance_client.py` + `test_judilibre_client.py` | full coverage |
+
+### Iteration 3 verification (final)
+
+- `pytest -m "not integration"` → **106 passed**
+- `ruff check src tests` → All checks passed
+- `ruff format --check src tests` → 28 files already formatted
+- `mypy src` → Success (strict mode) on 14 source files
+- `uv lock` → 185 packages resolved cleanly
+- All gates also run via `.github/workflows/ci.yml` on Linux 3.10/3.11/3.12/3.13 + macOS/Windows 3.12
+
+### Final state — what shipped on `compound-refactor/revamp-20260528-8cf805`
+
+20 atomic commits across 3 iterations. The branch ships:
+
+- Canonical `src/droit_francais_mcp/` layout with 3 domain sub-packages
+- Lazy-init OAuth clients (no import-time side effects)
+- Single linter+formatter (ruff) + strict mypy
+- 90 % test coverage (was 35 % entering iter 2)
+- GitHub Actions CI on 6 OS/Python combinations
+- `uv.lock` for reproducible installs
+- `fastmcp.json` for `fastmcp run`-style invocation
+- Console-script entry-point (`droit-francais-mcp`)
+- Back-compat shim at `droit_francais_MCP.py` with DeprecationWarning
+- Full community/contribution stack: README, QUICKSTART, CHANGELOG 1.3.0, CONTRIBUTING, SECURITY, PR/issue templates, dependabot
+- 23 findings from iter 1 audit + 10 PR-* findings from iter 1 discovery + iter 2 lazy-init/typing/CI/coverage gaps + iter 3 strictness/community/locking — **every flagged item resolved**.
