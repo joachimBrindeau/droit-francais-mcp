@@ -31,10 +31,10 @@ class JudilibreAPI(PisteOAuthClient):
     })
     MAX_DEPTH: ClassVar[int] = 5
 
-    DEFAULT_JURISDICTIONS: ClassVar[tuple] = ("cc", "ca", "tj", "tcom")
-    VALID_OPERATORS: ClassVar[frozenset] = frozenset({"or", "and", "exact"})
-    VALID_SORTS: ClassVar[frozenset] = frozenset({"score", "scorepub", "date"})
-    VALID_ORDERS: ClassVar[frozenset] = frozenset({"asc", "desc"})
+    DEFAULT_JURISDICTIONS: ClassVar[tuple[str, ...]] = ("cc", "ca", "tj", "tcom")
+    VALID_OPERATORS: ClassVar[frozenset[str]] = frozenset({"or", "and", "exact"})
+    VALID_SORTS: ClassVar[frozenset[str]] = frozenset({"score", "scorepub", "date"})
+    VALID_ORDERS: ClassVar[frozenset[str]] = frozenset({"asc", "desc"})
 
     def __init__(self, sandbox: bool = True):
         super().__init__(sandbox=sandbox)

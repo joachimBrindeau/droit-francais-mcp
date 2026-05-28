@@ -65,14 +65,16 @@ def get_legifrance_api() -> LegifranceAPI | None:
     """Renvoie l'instance `LegifranceAPI` (construite à la première demande)."""
     if _clients.get("legifrance", _SENTINEL) is _SENTINEL:
         _clients["legifrance"] = _safe_init(LegifranceAPI, "LegiFrance", "legifrance")
-    return _clients["legifrance"]
+    result: LegifranceAPI | None = _clients["legifrance"]
+    return result
 
 
 def get_judilibre_api() -> JudilibreAPI | None:
     """Renvoie l'instance `JudilibreAPI` (construite à la première demande)."""
     if _clients.get("judilibre", _SENTINEL) is _SENTINEL:
         _clients["judilibre"] = _safe_init(JudilibreAPI, "Judilibre", "judilibre")
-    return _clients["judilibre"]
+    result: JudilibreAPI | None = _clients["judilibre"]
+    return result
 
 
 def reset_clients() -> None:

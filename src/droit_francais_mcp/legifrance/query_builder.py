@@ -350,8 +350,8 @@ class LegifranceQueryBuilder:
         },
     }
 
-    def __init__(self):
-        self.query = {
+    def __init__(self) -> None:
+        self.query: Dict[str, Any] = {
             "fond": "",
             "recherche": {
                 "champs": [],
@@ -406,7 +406,7 @@ class LegifranceQueryBuilder:
         return self
 
     def add_field(
-        self, type_champ: str, criteres: List[Dict], operateur: str = "ET"
+        self, type_champ: str, criteres: List[Dict[str, Any]], operateur: str = "ET"
     ) -> "LegifranceQueryBuilder":
         """
         Ajoute un champ de recherche (objet ChampDTO dans l'API Légifrance).
@@ -488,9 +488,9 @@ class LegifranceQueryBuilder:
         valeur: str,
         type_recherche: str = "TOUS_LES_MOTS_DANS_UN_CHAMP",
         operateur: str = "ET",
-        proximite: int | None = None, # Nombre maximum de mots entre les termes recherchés,
-        criteres: List[Dict] | None = None,
-    ) -> Dict:
+        proximite: int | None = None,  # Nombre maximum de mots entre les termes recherchés,
+        criteres: List[Dict[str, Any]] | None = None,
+    ) -> Dict[str, Any]:
         """
         Crée un critère de recherche (objet CritereDTO dans l'API Légifrance).
 
@@ -926,7 +926,7 @@ class LegifranceQueryBuilder:
         self.query["recherche"]["fromAdvancedRecherche"] = advanced
         return self
 
-    def build(self) -> Dict:
+    def build(self) -> Dict[str, Any]:
         """
         Construit et retourne la requête finale au format SearchRequestDTO de l'API Légifrance.
 
