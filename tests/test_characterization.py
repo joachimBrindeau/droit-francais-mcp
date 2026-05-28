@@ -109,6 +109,52 @@ def test_safe_init_captures_exception_message() -> None:
     _init_errors.pop("test_key", None)
 
 
+def test_lazy_accessors_memoize(monkeypatch: pytest.MonkeyPatch) -> None:
+    """get_legifrance_api / get_judilibre_api ne construisent qu'une fois."""
+    from droit_francais_mcp import server as srv
+
+    construction_count = {"value": 0}
+
+    class _Counter:
+        def __init__(self, sandbox: bool = False) -> None:  # noqa: D401
+            construction_count["value"] += 1
+
+    srv.reset_clients()
+    monkeypatch.setattr(srv, "LegifranceAPI", _Counter)
+
+    srv.get_legifrance_api()
+    srv.get_legifrance_api()
+    srv.get_legifrance_api()
+    assert construction_count["value"] == 1, (
+        f"L'accesseur paresseux doit mémoïser : {construction_count['value']} constructions"
+    )
+    srv.reset_clients()
+
+
+def test_lazy_accessors_caches_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Une init qui échoue doit être mémoïsée (pas de retry à chaque appel)."""
+    from droit_francais_mcp import server as srv
+
+    attempts = {"value": 0}
+
+    class _Boom:
+        def __init__(self, sandbox: bool = False) -> None:  # noqa: D401
+            attempts["value"] += 1
+            raise RuntimeError("init failed")
+
+    srv.reset_clients()
+    monkeypatch.setattr(srv, "LegifranceAPI", _Boom)
+
+    assert srv.get_legifrance_api() is None
+    assert srv.get_legifrance_api() is None
+    assert srv.get_legifrance_api() is None
+    assert attempts["value"] == 1, (
+        f"Une init en échec doit être mémoïsée : {attempts['value']} tentatives"
+    )
+    assert "legifrance" in srv._init_errors
+    srv.reset_clients()
+
+
 # ----------------------------------------------------------------------------
 # Couche MCP — pin du nombre d'outils enregistrés et de leur nommage
 # ----------------------------------------------------------------------------
