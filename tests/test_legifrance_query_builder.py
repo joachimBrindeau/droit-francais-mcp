@@ -64,10 +64,10 @@ def test_set_pagination_caps_page_size_at_50() -> None:
 
 
 def test_code_fonds_classvar_contents() -> None:
-    assert LegifranceQueryBuilder.CODE_FONDS == frozenset({"CODE_ETAT", "CODE_DATE"})
+    assert frozenset({"CODE_ETAT", "CODE_DATE"}) == LegifranceQueryBuilder.CODE_FONDS
 
 
 def test_vigueur_default_fonds_classvar_contents() -> None:
-    assert LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS == frozenset(
+    assert frozenset(
         {"JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT"}
-    )
+    ) == LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS

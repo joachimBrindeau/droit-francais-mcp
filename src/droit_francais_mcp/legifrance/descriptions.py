@@ -281,4 +281,3 @@ FONDS_DESCRIPTIONS: Dict[str, Dict[str, Any]] = {
         "contenu": "Accords d'entreprise, protocoles d'accord, avenants d'entreprise",
     },
 }
-
