@@ -267,6 +267,16 @@ class LegifranceQueryBuilder:
         "JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT",
     })
 
+    @classmethod
+    def supports_date_filter(cls, fond: str) -> bool:
+        """Indique si le fond accepte un filtre date_debut/date_fin."""
+        return fond in cls.DATE_FILTER_FACETTES
+
+    @classmethod
+    def date_filter_facette(cls, fond: str) -> Optional[str]:
+        """Renvoie la facette de date utilisée par le fond, ou `None`."""
+        return cls.DATE_FILTER_FACETTES.get(fond)
+
     # Descriptions détaillées des fonds
     FONDS_DESCRIPTIONS = {
         "ALL": {

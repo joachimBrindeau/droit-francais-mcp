@@ -25,17 +25,17 @@ class JudilibreAPI(PisteOAuthClient):
     Client OAuth pour l'API JudiLibre.
     """
 
-    _API_LABEL = "Judilibre"
-    _ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
+    API_LABEL = "Judilibre"
+    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
         "text", "id", "jurisdiction", "chamber", "formation", "type", "theme",
         "publication", "decision_date", "solution", "score",
     })
-    _MAX_DEPTH: ClassVar[int] = 5
+    MAX_DEPTH: ClassVar[int] = 5
 
-    _DEFAULT_JURISDICTIONS: ClassVar[tuple] = ("cc", "ca", "tj", "tcom")
-    _VALID_OPERATORS: ClassVar[frozenset] = frozenset({"or", "and", "exact"})
-    _VALID_SORTS: ClassVar[frozenset] = frozenset({"score", "scorepub", "date"})
-    _VALID_ORDERS: ClassVar[frozenset] = frozenset({"asc", "desc"})
+    DEFAULT_JURISDICTIONS: ClassVar[tuple] = ("cc", "ca", "tj", "tcom")
+    VALID_OPERATORS: ClassVar[frozenset] = frozenset({"or", "and", "exact"})
+    VALID_SORTS: ClassVar[frozenset] = frozenset({"score", "scorepub", "date"})
+    VALID_ORDERS: ClassVar[frozenset] = frozenset({"asc", "desc"})
 
     def __init__(self, sandbox: bool = True):
         super().__init__(sandbox=sandbox)
@@ -98,17 +98,17 @@ class JudilibreAPI(PisteOAuthClient):
         """
         if page_size > 50:
             raise ValueError("page_size ne peut pas dépasser 50")
-        if operator not in self._VALID_OPERATORS:
+        if operator not in self.VALID_OPERATORS:
             raise ValueError("operator doit être 'or', 'and' ou 'exact'")
-        if sort not in self._VALID_SORTS:
+        if sort not in self.VALID_SORTS:
             raise ValueError("sort doit être 'score', 'scorepub' ou 'date'")
-        if order not in self._VALID_ORDERS:
+        if order not in self.VALID_ORDERS:
             raise ValueError("order doit être 'asc' ou 'desc'")
 
         endpoint = f"{self.api_url}/search"
 
         if jurisdiction is None:
-            jurisdiction = list(self._DEFAULT_JURISDICTIONS)
+            jurisdiction = list(self.DEFAULT_JURISDICTIONS)
 
         params: Dict[str, Any] = {
             "operator": operator,
@@ -171,7 +171,7 @@ class JudilibreAPI(PisteOAuthClient):
             raise ValueError(
                 "L'identifiant de la décision est obligatoire et ne peut pas être vide"
             )
-        if operator not in self._VALID_OPERATORS:
+        if operator not in self.VALID_OPERATORS:
             raise ValueError("operator doit être 'or', 'and' ou 'exact'")
 
         endpoint = f"{self.api_url}/decision"
@@ -260,4 +260,4 @@ class JudilibreAPI(PisteOAuthClient):
         """
         Nettoie une réponse JudiLibre via le helper partagé `recursive_filter`.
         """
-        return recursive_filter(x, self._ALLOWED_KEYS, max_depth=self._MAX_DEPTH)
+        return recursive_filter(x, self.ALLOWED_KEYS, max_depth=self.MAX_DEPTH)

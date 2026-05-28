@@ -27,13 +27,13 @@ class LegifranceAPI(PisteOAuthClient):
     Client pour l'API Légifrance.
     """
 
-    _API_LABEL = "Légifrance"
-    _ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
+    API_LABEL = "Légifrance"
+    ALLOWED_KEYS: ClassVar[FrozenSet[str]] = frozenset({
         "id", "title", "text", "values", "datePublication", "startDate",
         "origine", "nature", "natureJuridiction", "solution", "numeroAffaire",
         "president", "avocats", "titre", "texte", "juridiction", "content",
     })
-    _MAX_DEPTH: ClassVar[int] = 8
+    MAX_DEPTH: ClassVar[int] = 8
 
     def __init__(self, sandbox: bool = True):
         super().__init__(sandbox=sandbox)
@@ -244,4 +244,4 @@ class LegifranceAPI(PisteOAuthClient):
         """
         Nettoie une réponse Légifrance via le helper partagé `recursive_filter`.
         """
-        return recursive_filter(x, self._ALLOWED_KEYS, max_depth=self._MAX_DEPTH)
+        return recursive_filter(x, self.ALLOWED_KEYS, max_depth=self.MAX_DEPTH)

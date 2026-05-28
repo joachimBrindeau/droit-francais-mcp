@@ -38,7 +38,7 @@ class PisteOAuthClient:
     en concaténant `self.base_url` avec leur chemin spécifique.
     """
 
-    _API_LABEL: str = "PISTE"  # surcharger dans les sous-classes pour les messages d'erreur
+    API_LABEL: str = "PISTE"  # surcharger dans les sous-classes pour les messages d'erreur
 
     def __init__(self, sandbox: bool = True):
         """
@@ -122,7 +122,7 @@ class PisteOAuthClient:
             return access_token
 
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Erreur lors de l'obtention du token: {e}")
+            raise Exception(f"Erreur lors de l'obtention du token {self.API_LABEL}: {e}")
 
     def _get_api_headers(self) -> Dict[str, str]:
         """En-têtes standard pour les appels API PISTE authentifiés."""

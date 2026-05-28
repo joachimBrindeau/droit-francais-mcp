@@ -296,9 +296,9 @@ def rechercher_legifrance(
         logger.error(f"API Légifrance non initialisée: {err}")
         return []
 
-    # Source unique de vérité: LegifranceQueryBuilder.DATE_FILTER_FACETTES.
+    # Source unique de vérité: LegifranceQueryBuilder.supports_date_filter().
     warning = None
-    if (date_debut or date_fin) and fond not in LegifranceQueryBuilder.DATE_FILTER_FACETTES:
+    if (date_debut or date_fin) and not LegifranceQueryBuilder.supports_date_filter(fond):
         warning = [
             f"⚠️ ATTENTION: Les filtres de dates (date_debut/date_fin) sont ignorés pour le fond '{fond}'. "
             f"Les filtres de dates ne fonctionnent que pour les fonds: "
