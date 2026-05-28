@@ -16,8 +16,8 @@ from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
 
 import requests
 
-from piste_auth import PisteOAuthClient
-from piste_utils import recursive_filter
+from droit_francais_mcp.piste.auth import PisteOAuthClient
+from droit_francais_mcp.piste.filters import recursive_filter
 
 
 class JudilibreAPI(PisteOAuthClient):

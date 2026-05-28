@@ -60,15 +60,9 @@ Documentation = "https://github.com/jmtanguy/DroitFrancaisMCP#readme"
 Repository = "https://github.com/jmtanguy/DroitFrancaisMCP"
 Issues = "https://github.com/jmtanguy/DroitFrancaisMCP/issues"
 
-[tool.setuptools]
-py-modules = [
-    "droit_francais_MCP",
-    "api_legifrance",
-    "api_judilibre",
-    "api_legifrance_query_builder",
-    "piste_auth",
-    "piste_utils",
-]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["droit_francais_mcp*"]
 
 [tool.black]
 line-length = 100

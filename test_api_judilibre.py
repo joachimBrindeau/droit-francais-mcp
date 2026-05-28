@@ -33,7 +33,7 @@ Pour exécuter les tests:
 
 import pytest
 
-from api_judilibre import JudilibreAPI
+from droit_francais_mcp.judilibre.client import JudilibreAPI
 
 # Marquer tous les tests comme tests d'intégration car ils appellent l'API réelle
 pytestmark = pytest.mark.integration

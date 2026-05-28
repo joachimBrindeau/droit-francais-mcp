@@ -17,9 +17,9 @@ from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
 
 import requests
 
-from api_legifrance_query_builder import LegifranceQueryBuilder
-from piste_auth import ERR_403_MESSAGE, PisteOAuthClient
-from piste_utils import recursive_filter
+from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
+from droit_francais_mcp.piste.auth import ERR_403_MESSAGE, PisteOAuthClient
+from droit_francais_mcp.piste.filters import recursive_filter
 
 
 class LegifranceAPI(PisteOAuthClient):

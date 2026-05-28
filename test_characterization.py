@@ -27,7 +27,7 @@ pytestmark = pytest.mark.unit
 
 def test_safe_mcp_tool_returns_deep_copy_on_error() -> None:
     """Une mutation du retour d'erreur ne doit pas fuir vers l'appel suivant."""
-    from droit_francais_MCP import safe_mcp_tool
+    from droit_francais_mcp.server import safe_mcp_tool
 
     payload = {"erreur": "boom", "details": []}
 
@@ -50,13 +50,13 @@ def test_safe_mcp_tool_returns_deep_copy_on_error() -> None:
 
 def test_safe_mcp_tool_logs_exception_with_traceback(caplog: pytest.LogCaptureFixture) -> None:
     """L'exception doit être journalisée via logger.exception (avec traceback)."""
-    from droit_francais_MCP import safe_mcp_tool
+    from droit_francais_mcp.server import safe_mcp_tool
 
     @safe_mcp_tool("test-label", on_error_return=None)
     def fails() -> Any:
         raise ValueError("payload de test")
 
-    with caplog.at_level(logging.ERROR, logger="droit_francais_MCP"):
+    with caplog.at_level(logging.ERROR, logger="droit_francais_mcp.server"):
         assert fails() is None
 
     matching = [r for r in caplog.records if "test-label" in r.message]
@@ -70,7 +70,7 @@ def test_safe_mcp_tool_logs_exception_with_traceback(caplog: pytest.LogCaptureFi
 
 def test_safe_mcp_tool_passthrough_on_success() -> None:
     """En l'absence d'exception, la valeur de retour est intacte."""
-    from droit_francais_MCP import safe_mcp_tool
+    from droit_francais_mcp.server import safe_mcp_tool
 
     @safe_mcp_tool("label", on_error_return={"erreur": "fallback"})
     def ok() -> Any:
@@ -86,17 +86,17 @@ def test_safe_mcp_tool_passthrough_on_success() -> None:
 
 def test_init_errors_dict_exists() -> None:
     """Le module expose un dict module-level _init_errors."""
-    import droit_francais_MCP
+    from droit_francais_mcp import server as srv
 
-    assert hasattr(droit_francais_MCP, "_init_errors"), (
+    assert hasattr(srv, "_init_errors"), (
         "Le mécanisme _init_errors doit être exposé au niveau module"
     )
-    assert isinstance(droit_francais_MCP._init_errors, dict)
+    assert isinstance(srv._init_errors, dict)
 
 
 def test_safe_init_captures_exception_message() -> None:
     """_safe_init doit capturer l'exception et la stocker dans _init_errors."""
-    from droit_francais_MCP import _safe_init, _init_errors
+    from droit_francais_mcp.server import _safe_init, _init_errors
 
     class _Boom:
         def __init__(self, sandbox: bool = True) -> None:  # noqa: D401
@@ -145,7 +145,7 @@ def _registered_tool_names(mcp: Any) -> frozenset[str]:
 
 def test_mcp_tool_count_and_names() -> None:
     """Le serveur MCP enregistre exactement les 5 outils attendus."""
-    from droit_francais_MCP import mcp
+    from droit_francais_mcp.server import mcp
 
     tool_names = _registered_tool_names(mcp)
     assert tool_names == EXPECTED_TOOL_NAMES, (
@@ -161,14 +161,14 @@ def test_mcp_tool_count_and_names() -> None:
 
 def test_code_fonds_frozenset() -> None:
     """CODE_FONDS doit contenir exactement les fonds acceptant TEXT_NOM_CODE."""
-    from api_legifrance_query_builder import LegifranceQueryBuilder
+    from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
 
     assert LegifranceQueryBuilder.CODE_FONDS == frozenset({"CODE_ETAT", "CODE_DATE"})
 
 
 def test_vigueur_default_fonds_frozenset() -> None:
     """VIGUEUR_DEFAULT_FONDS doit lister les fonds où ARTICLE_LEGAL_STATUS=VIGUEUR est imposé par défaut."""
-    from api_legifrance_query_builder import LegifranceQueryBuilder
+    from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
 
     assert LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS == frozenset({
         "JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT",
@@ -182,7 +182,7 @@ def test_vigueur_default_fonds_frozenset() -> None:
 
 def test_piste_oauth_client_request_uses_shared_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     """Tous les appels HTTP des sous-classes doivent passer par _request — qui applique le timeout PISTE_HTTP_TIMEOUT."""
-    from piste_auth import PISTE_HTTP_TIMEOUT
+    from droit_francais_mcp.piste.auth import PISTE_HTTP_TIMEOUT
 
     captured: dict = {}
 
@@ -205,7 +205,7 @@ def test_piste_oauth_client_request_uses_shared_timeout(monkeypatch: pytest.Monk
     monkeypatch.setattr(_req, "request", _fake_request)
 
     # Bypass auth pour le test du wrapper HTTP isolément.
-    from piste_auth import PisteOAuthClient
+    from droit_francais_mcp.piste.auth import PisteOAuthClient
 
     with patch.object(PisteOAuthClient, "_get_api_headers", return_value={"Authorization": "Bearer T"}):
         # On ne peut pas instancier PisteOAuthClient sans creds — on lui mock __init__.

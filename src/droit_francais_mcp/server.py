@@ -19,9 +19,9 @@ from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 from fastmcp import FastMCP
 
-from api_judilibre import JudilibreAPI
-from api_legifrance import LegifranceAPI
-from api_legifrance_query_builder import LegifranceQueryBuilder
+from droit_francais_mcp.judilibre.client import JudilibreAPI
+from droit_francais_mcp.legifrance.client import LegifranceAPI
+from droit_francais_mcp.legifrance.query_builder import LegifranceQueryBuilder
 
 # ============================================================================
 # CONFIGURATION ET INITIALISATION
@@ -530,5 +530,10 @@ def consulter_decision_judilibre(decision_id: str) -> Any:
     return judilibreapi.consult(decision_id=decision_id)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Point d'entrée pour `python -m droit_francais_mcp` et la console-script."""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()

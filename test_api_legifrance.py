@@ -12,7 +12,7 @@ Pour exécuter les tests:
 
 import pytest
 
-from api_legifrance import LegifranceAPI
+from droit_francais_mcp.legifrance.client import LegifranceAPI
 
 # Marquer tous les tests comme tests d'intégration car ils appellent l'API réelle
 pytestmark = pytest.mark.integration
