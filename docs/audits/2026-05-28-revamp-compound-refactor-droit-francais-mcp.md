@@ -256,4 +256,57 @@ Each boundary commits only after this gate exits 0:
 **Deliberately not done (deferred to follow-up runs)**:
 - `uv.lock` checked into repo (recommended by best-practices research; deferred until repo CI adopts `uv`).
 - `fastmcp.json` declarative config (optional 2.11+ feature; current `[project.scripts]` covers canonical invocation).
-- Lazy-init for `legifranceapi`/`judilibreapi` module globals (REVAMP-015): out-of-scope for revamp; would change the import-time contract and warrants its own behavior contract.
+- ~~Lazy-init for `legifranceapi`/`judilibreapi` module globals (REVAMP-015)~~ — addressed in iteration 2 / B8.
+
+---
+
+## Iteration 2 — additional 6 boundaries (B8–B13)
+
+Following the user's request to "continue, it's far from perfect", a second pass identified and closed structural debt that iteration 1 left out of scope.
+
+### Discovery deltas (iteration 2)
+
+| Concern | Iteration 1 state | Iteration 2 finding |
+|---|---|---|
+| `server.py` size | 538 LOC (FastMCP + 5 tools + 12 resources all in one file) | split into 3 modules |
+| Module globals `legifranceapi`/`judilibreapi` | constructed at import (REVAMP-015 deferred) | lazy-init via accessors |
+| mypy config | none — ad-hoc CLI flags in Makefile | `[tool.mypy]` block + 24 strict errors fixed |
+| CI gate | none (no `.github/workflows/`) | matrix workflow (3.10–3.13 + macOS + Windows) |
+| `query_builder.py` size | 1036 LOC (includes 270 LOC of dead descriptions dicts) | 813 LOC after extraction |
+| Test coverage | 35% (9 characterization tests) | 47% (40 unit tests) |
+| `droit_francais_mcp.__init__` public API | exposes only `__version__` | re-exports 5 client/builder/filter symbols + pinned via test |
+| Ruff format | not enforced as gate | `ruff format --check` runs in CI |
+
+### Iteration 2 boundary plan (delivered)
+
+| B | Commit | Subject |
+|---|---|---|
+| **B8** | `14a2f26` | Split server.py into server.py + tools.py + resources.py + lazy-init clients (closes REVAMP-015) |
+| **B9** | `f985aa6` | pyproject `[tool.mypy]` block + fix 24 strict-mode errors |
+| **B10** | `873201c` | GitHub Actions CI (ruff + ruff format + mypy + pytest matrix) + apply ruff format baseline |
+| **B11** | `6732ffb` | Extract `FONDS_DESCRIPTIONS` / `TYPE_CHAMP_DESCRIPTIONS` into `legifrance/descriptions.py` |
+| **B12** | `d03ce6d` | Unit tests for filters / piste auth / query_builder (35% → 46% coverage) |
+| **B13** | `ddfee33` | Re-export public API from package `__init__` + `tests/test_public_api.py` pin |
+
+### Δ Iteration 1 final → Iteration 2 final
+
+| Metric | After iter 1 | After iter 2 | Δ |
+|---|---|---|---|
+| `server.py` LOC | 538 | 154 | **−384** (split into 3) |
+| `query_builder.py` LOC | 1036 | 813 | **−223** (descriptions extracted) |
+| Module-level eager init | yes (constructs OAuth clients at import) | no (memoized lazy accessors) | fixed |
+| Tests offline | 9 | 40 | **+31** |
+| Test coverage | 35% | 47% | **+12 pp** |
+| mypy strict errors | 24 | 0 | **−24** |
+| CI workflows | 0 | 1 (matrix 3.10–3.13 × ubuntu/macos/windows) | **+1** |
+| `__init__.py` public symbols | 1 (`__version__`) | 6 (+ 4 classes + 1 helper) | **+5** |
+| `ruff format --check` as gate | no | yes | enforced |
+| Ruff config | basic | extended (E/F/I/B/UP/S/SIM) + per-file ignores | tightened |
+
+### Iteration 2 verification (final)
+
+- `pytest -m "not integration"` → **40 passed**
+- `ruff check src tests` → all checks passed
+- `ruff format --check src tests` → 23 files already formatted
+- `mypy src` → Success: no issues found in 14 source files
+- Editable install + console-script + back-compat shim all functional
