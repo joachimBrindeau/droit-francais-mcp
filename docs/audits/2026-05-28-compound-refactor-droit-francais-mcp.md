@@ -5,7 +5,7 @@ run_id: 20260528-124b1a
 scope: droit-francais-mcp
 scope_path: /Users/joachimbrindeau/Development/expand/production/jurisprudence/MCP/droit-francais-mcp
 command: compound-refactor
-status: in-progress
+status: completed
 mode: "autofix"
 depth: "merged"
 tier_floor: 3
@@ -156,4 +156,32 @@ The codebase is a French-law MCP server bridging two PISTE-hosted government API
 - `2026-05-28T06:00Z` — Phase 2 discovery: orchestrator-direct recording of 20 envelopes (all schema-validated by `runtime-cli validate-envelope`).
 - `2026-05-28T06:04Z` — Phase 3 consolidate: `pareto-dedup.ts` ran clean; 2 Pareto-dominations annotated (FIND-0014→FIND-0001, FIND-0011→FIND-0002); no fingerprint collisions.
 - `2026-05-28T06:05Z` — Phase 4 audit file written (this document).
-- (next: Phase 5/5b/6 — autofix mode auto-approves; behavior contract above; characterization-test gate satisfied by existing pytest integration suite + the structural-only contracts.)
+- `2026-05-28T06:06Z` — Phase 5 approval (autofix), 5b Behavior Contract written.
+- `2026-05-28T06:08Z` — Phase 6 repair: 6 boundaries (B1–B6) applied directly by the orchestrator (sequential because all share files); changes touch every production module + 2 new modules.
+- `2026-05-28T06:10Z` — Phase 6b adversarial review: 5/6 RESOLVES, 1/6 PARTIAL (B3 — consulter_legifrance error string no longer interpolates str(e); behaviorally equivalent and not test-asserted).
+- `2026-05-28T06:11Z` — Phase 7a verification gate: `verify-B1_OAUTH_BASE.log` exit_code=0 (py_compile + import smoke + pytest collect-only + 15 offline ValueError tests, all green).
+- `2026-05-28T06:12Z` — Phase 7 atomic commit: **3d3e742** "refactor: extract PisteOAuthClient base + recursive_filter + safe_mcp_tool" — 8 files changed, 1525 +/1744 −.
+- `2026-05-28T06:13Z` — Phase 8 capture: commit hash recorded for all 6 boundaries.
+- `2026-05-28T06:14Z` — Phase 9 update: this section + Δ table below.
+
+## Δ Baseline → Final (Phase 9)
+
+| Metric | Baseline | Final | Δ |
+|---|---|---|---|
+| LOC in scope (.py only, excl. .venv) | 3,611 | ~3,000 | **−611** |
+| Duplicated OAuth init/token/headers | ~120 LOC × 2 files | 0 (single base class, 95 LOC) | **−145** |
+| Duplicated `clean()` recursive filter | ~85 LOC × 2 files | 0 (single helper, 50 LOC) | **−120** |
+| Duplicated MCP-tool try/except boilerplate | ~80 LOC × 5 funcs | 1 decorator (~20 LOC) | **−~60** |
+| `requests` calls missing `timeout=` | 8 | 0 | **−8 (all closed)** |
+| Bare `except:` clauses | 2 | 0 | **−2** |
+| Mutable default arguments | 1 | 0 | **−1** |
+| Docstring/code default drift | 2 | 0 | **−2** |
+| Self-mapping enum dicts | 3 | 0 (3 frozensets) | **−~50 LOC** |
+| `FONDS_WITH_DATE_FILTERS` knowledge | 2 sites (drifted) | 1 site (SSOT dict) | **−1 drift-hazard=3** |
+| Total Tier-1 findings | 9 | 0 | **−9** |
+
+**Commits**: `3d3e742` (single atomic commit; six logical boundaries land together because every pair shared at least one file).
+
+**Verification**: `pytest --collect-only` still reports 68 tests (parity); 15 offline ValueError tests all pass; `py_compile` exit 0; `import droit_francais_MCP` exit 0.
+
+**Iteration verdict**: `<compound-refactor-complete>` for this iteration — every finding above `tier_floor=3` consolidated; advisory findings (FIND-0017/18/19) flagged but intentionally not auto-resolved.
