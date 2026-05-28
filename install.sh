@@ -53,10 +53,11 @@ echo '    }'
 echo '  }'
 echo '}'
 echo ""
-echo "📝 Note : Vérifiez que les fichiers .env existent avec vos clés API :"
-echo "  - LEGIFRANCE_CLIENT_ID"
-echo "  - LEGIFRANCE_CLIENT_SECRET"
-echo "  - JUDILIBRE_API_KEY"
+echo "📝 Note : Vérifiez que le fichier .env contient vos identifiants PISTE (voir .env.example) :"
+echo "  - PISTE_CLIENT_ID         (production)"
+echo "  - PISTE_CLIENT_SECRET     (production)"
+echo "  - PISTE_SANDBOX_CLIENT_ID     (sandbox, optionnel)"
+echo "  - PISTE_SANDBOX_CLIENT_SECRET (sandbox, optionnel)"
 echo ""
 echo "🔄 Redémarrez Claude Desktop pour activer le serveur MCP."
 echo "🎯 Testez avec : 'Trouve-moi des articles sur le mariage dans le Code civil'"

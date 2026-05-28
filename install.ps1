@@ -208,10 +208,11 @@ Write-Host "==================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "1. Redémarrer Claude Desktop (fermez complètement et relancez)" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "2. Vérifier que les fichiers .env existent avec vos clés API :" -ForegroundColor Yellow
-Write-Host "   - LEGIFRANCE_CLIENT_ID" -ForegroundColor White
-Write-Host "   - LEGIFRANCE_CLIENT_SECRET" -ForegroundColor White
-Write-Host "   - JUDILIBRE_API_KEY" -ForegroundColor White
+Write-Host "2. Vérifier que le fichier .env contient vos identifiants PISTE (voir .env.example) :" -ForegroundColor Yellow
+Write-Host "   - PISTE_CLIENT_ID         (production)" -ForegroundColor White
+Write-Host "   - PISTE_CLIENT_SECRET     (production)" -ForegroundColor White
+Write-Host "   - PISTE_SANDBOX_CLIENT_ID     (sandbox, optionnel)" -ForegroundColor White
+Write-Host "   - PISTE_SANDBOX_CLIENT_SECRET (sandbox, optionnel)" -ForegroundColor White
 Write-Host ""
 Write-Host "3. Tester avec une question juridique comme :" -ForegroundColor Yellow
 Write-Host "   'Trouve-moi des articles sur le mariage dans le Code civil'" -ForegroundColor Cyan
