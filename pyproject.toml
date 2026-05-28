@@ -29,7 +29,10 @@ classifiers = [
 ]
 
 dependencies = [
-    "fastmcp>=2.12.3",
+    # FastMCP 3.x change le contrat des décorateurs/imports — voir
+    # https://gofastmcp.com/getting-started/installation. Cap pour éviter
+    # une mise à jour majeure non testée.
+    "fastmcp>=2.12.3,<3",
     "requests>=2.32.5",
     "python-dotenv>=1.1.1",
 ]
@@ -39,6 +42,7 @@ dev = [
     "pytest>=8.4.2",
     "pytest-cov>=6.0.0",
     "pytest-asyncio>=0.25.2",
+    "types-requests>=2.33.0",
     "black>=24.10.0",
     "flake8>=7.1.1",
     "mypy>=1.13.0",
@@ -64,7 +68,6 @@ py-modules = [
     "api_legifrance_query_builder",
     "piste_auth",
     "piste_utils",
-    "__version__",
 ]
 
 [tool.black]

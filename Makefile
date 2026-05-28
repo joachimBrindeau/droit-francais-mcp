@@ -15,13 +15,13 @@ help:  ## Afficher cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
 
 install:  ## Installer les dépendances de production
-	@echo "$(GREEN)Installation des dépendances de production...$(NC)"
-	pip install -r requirements.txt
+	@echo "$(GREEN)Installation depuis pyproject.toml...$(NC)"
+	pip install .
 	@echo "$(GREEN)✓ Installation terminée$(NC)"
 
 install-dev:  ## Installer les dépendances de développement
-	@echo "$(GREEN)Installation des dépendances de développement...$(NC)"
-	pip install -r requirements.txt -r requirements-dev.txt
+	@echo "$(GREEN)Installation en mode éditable avec extras dev...$(NC)"
+	pip install -e ".[dev]"
 	@echo "$(GREEN)✓ Installation terminée$(NC)"
 
 test:  ## Lancer les tests
@@ -86,7 +86,7 @@ update:  ## Mettre à jour les dépendances
 	@echo ""
 	@echo "$(YELLOW)Pour mettre à jour un package:$(NC)"
 	@echo "  pip install --upgrade <package>"
-	@echo "  Puis mettre à jour requirements.txt"
+	@echo "  Puis ajuster les bornes de version dans pyproject.toml"
 
 check-all: format lint test security  ## Tout vérifier (format, lint, test, security)
 	@echo "$(GREEN)✓ Toutes les vérifications sont terminées !$(NC)"
@@ -102,7 +102,7 @@ init:  ## Initialiser l'environnement de développement
 	@echo "  make install-dev"
 
 
-version:  ## Afficher la version
-	@python3 -c "from __version__ import __version__, __author__; print(f'Version: {__version__}\nAuteur: {__author__}')"
+version:  ## Afficher la version (source unique: pyproject.toml)
+	@python3 -c "from importlib.metadata import version, metadata; m = metadata('droit-francais-mcp'); print(f'Version: {version(\"droit-francais-mcp\")}\nAuteur: {m.get(\"Author\") or m.get(\"Author-email\") or \"n/c\"}')"
 
 .DEFAULT_GOAL := help
