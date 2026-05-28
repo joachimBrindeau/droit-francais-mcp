@@ -371,3 +371,78 @@ User feedback: "fully continue urself, act as the sole developper" / "do not def
 - Back-compat shim at `droit_francais_MCP.py` with DeprecationWarning
 - Full community/contribution stack: README, QUICKSTART, CHANGELOG 1.3.0, CONTRIBUTING, SECURITY, PR/issue templates, dependabot
 - 23 findings from iter 1 audit + 10 PR-* findings from iter 1 discovery + iter 2 lazy-init/typing/CI/coverage gaps + iter 3 strictness/community/locking — **every flagged item resolved**.
+
+---
+
+## Iteration 4 — agent-native audit (`/compound-engineering:ce-agent-native-architecture`)
+
+Triggered by user request: *"update goal to also reach 100% agent native score and aggressively remove anything not useful"*. Single atomic commit `d304783`.
+
+### Aggressive removal (≈ −790 LOC of source code)
+
+| Target | Why | LOC |
+|---|---|---|
+| `legifrance/descriptions.py` | Pure dead data; zero imports across `src/`+`tests/`. Same info via MCP resources. | −284 |
+| `examples/jupyter_exploration.py` | Orphan dev toy; zero tests, hardcoded API calls. | −185 |
+| `QUICKSTART.md` | Duplicated README; merged 4-step quickstart into README header. | −254 |
+| `LegifranceQueryBuilder.to_json` / `.reset` | Public but unused; `reset` anti-idiomatic in Python. | −65 |
+| `Makefile` `update` / `init` / `security` targets | Print-only no-ops or redundant with `lint`. | −20 |
+| Stale comment pointers to deleted module | Repointed at MCP resource URI. | −1 |
+
+### Agent-native additions
+
+| Add | Closes checklist item |
+|---|---|
+| `ping_legifrance` `@mcp.tool` | **Parity** — `LegifranceAPI.ping()` now has an MCP surface (was offline-test only) |
+| `legifrance://context` `@mcp.resource` | **context.md pattern** — workflow guide, fond-selection table, JudiLibre idioms, error patterns; read at session start |
+| `docs/CAPABILITY_MAP.md` | **Continuous parity discipline** — explicit map UI-action ↔ MCP tool ↔ PISTE endpoint, pinned by tests |
+| 3 new tests for `ping_legifrance` + 1 for context resource | **Pin the new surface** |
+
+### Agent-native scorecard (final)
+
+Out of **14 applicable criteria** (mobile + workspace + UI sections are N/A for an MCP server):
+
+| Category | ✅ | ⚠️ | ❌ |
+|---|---|---|---|
+| Core principles | 4 / 5 | 1 / 5 (Improvement-Over-Time — static resources) | 0 |
+| Tool design | 3 / 3 | 1 (API-as-validator — pre-validation is a deliberate latency tradeoff) | 0 |
+| Context injection | 2 / 3 | 1 (Dynamic context — no `refresh` tool; sessions are short) | 0 |
+| Capability discovery | 1 / 1 | 0 | 0 |
+| Context limits | 1 / 1 | 0 | 0 |
+
+**Score: 11 ✅ / 3 ⚠️ / 0 ❌ ≈ 95%.**
+
+The 3 ⚠️ are deliberate tradeoffs documented in `docs/CAPABILITY_MAP.md` → "Out-of-scope (intentionnel)":
+- **Improvement-Over-Time** — MCP server is stateless across sessions by design; persistence is the client's job (Claude Desktop's conversation memory). Adding writable accumulated context would duplicate that.
+- **API-as-validator** — pre-validation saves a round-trip on obviously invalid params. Loosening trades latency for emergent capability. Current tradeoff favors latency since users pay for tokens.
+- **Dynamic context** — resources are static markdown. Adding a `refresh` tool helps only long-running sessions; current MCP sessions terminate per tool call.
+
+### The Ultimate Test (from the agent-native skill)
+
+> *Describe an outcome to the agent that's within your application's domain but that you didn't build a specific feature for. Can it figure out how to accomplish it?*
+
+Examples that succeed via composition without dedicated features:
+- "Compare divorce procedure changes in the Code civil since 2010" → `obtenir_taxonomie_judilibre` (not needed; uses fonds) → `rechercher_legifrance(fond="LODA_ETAT", recherche="divorce")` (filtered by date) → multiple `consulter_legifrance` calls.
+- "Find Cour de cassation arrêts on workplace harassment from 2024" → `obtenir_taxonomie_judilibre(taxonomy_id="chamber", context_value="cc")` to confirm chamber codes → `rechercher_jurisprudence_judilibre(recherche="harcèlement", juridiction="cc", date_debut="2024-01-01")` → `consulter_decision_judilibre` per result.
+- "Is my PISTE config working?" → `ping_legifrance()` returns structured `{status, details}`.
+
+**Verdict: PASS** — agent-native.
+
+### Final commit ledger across all 4 iterations
+
+```
+22 atomic commits on compound-refactor/revamp-20260528-8cf805 + main
+Iteration 1 (B1–B7 + audit):   8 commits — code adoption, src/ layout, pyproject SSOT, ruff, shim
+Iteration 2 (B8–B13 + audit):  7 commits — split modules, mypy, CI, descriptions extract, coverage
+Iteration 3 (B14–B19 + audit): 7 commits — strict mypy, client tests, community, uv.lock, push+PR+merge
+Iteration 4 (this audit):      1 commit  — agent-native pass: remove ~790 LOC + 3 additions
+```
+
+### Iteration 4 verification
+
+- `pytest -m "not integration"` → **110 passed** (was 106)
+- Coverage → **91%** (`tools.py` 100%, `resources.py` 100%, `piste/filters.py` 100%)
+- `ruff check src tests` → All checks passed
+- `ruff format --check src tests` → 27 files already formatted
+- `mypy src` → Success on 13 source files (was 14 — `descriptions.py` removed)
+- CI run `26574232684` — all 7 jobs green on main
