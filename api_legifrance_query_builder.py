@@ -258,6 +258,15 @@ class LegifranceQueryBuilder:
         "ACCO":       "DATE_SIGNATURE",
     }
 
+    # Fonds qui acceptent le filtre TEXT_NOM_CODE (recherche par nom de code).
+    CODE_FONDS: ClassVar[FrozenSet[str]] = frozenset({"CODE_ETAT", "CODE_DATE"})
+
+    # Fonds pour lesquels la couche client applique par défaut le filtre
+    # ARTICLE_LEGAL_STATUS=VIGUEUR (textes actuellement en vigueur).
+    VIGUEUR_DEFAULT_FONDS: ClassVar[FrozenSet[str]] = frozenset({
+        "JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT",
+    })
+
     # Descriptions détaillées des fonds
     FONDS_DESCRIPTIONS = {
         "ALL": {

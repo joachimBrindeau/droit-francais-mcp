@@ -18,7 +18,7 @@ from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
 import requests
 
 from api_legifrance_query_builder import LegifranceQueryBuilder
-from piste_auth import ERR_403_MESSAGE, PISTE_HTTP_TIMEOUT, PisteOAuthClient
+from piste_auth import ERR_403_MESSAGE, PisteOAuthClient
 from piste_utils import recursive_filter
 
 
@@ -39,34 +39,6 @@ class LegifranceAPI(PisteOAuthClient):
         super().__init__(sandbox=sandbox)
         self.api_url = f"{self.base_url}/dila/legifrance/lf-engine-app"
 
-    def test_connection(self) -> dict:
-        """
-        Teste la connexion à l'API en vérifiant que le token est valide.
-        """
-        try:
-            token = self.get_access_token()
-            token_preview = f"{token[:10]}...{token[-10:]}" if len(token) > 20 else "***"
-            return {
-                "status": "success",
-                "base_url": self.base_url,
-                "api_url": self.api_url,
-                "token_obtained": True,
-                "token_preview": token_preview,
-                "token_expires_at": (
-                    self.token_expires_at.isoformat() if self.token_expires_at else None
-                ),
-                "message": (
-                    "Token obtenu avec succès. Vérifiez votre abonnement à l'API Légifrance sur "
-                    "https://piste.gouv.fr/ si vous obtenez des erreurs 403."
-                ),
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "message": "Échec de l'obtention du token. Vérifiez vos identifiants dans le fichier .env",
-            }
-
     def ping(self) -> str:
         """
         Teste la connexion à l'endpoint de recherche avec un simple ping.
@@ -79,12 +51,7 @@ class LegifranceAPI(PisteOAuthClient):
         """
         endpoint = f"{self.api_url}/search/ping"
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint)
             return response.text.strip()
         except requests.exceptions.HTTPError as e:
             error_msg = f"Erreur HTTP {e.response.status_code} lors du ping"
@@ -171,7 +138,7 @@ class LegifranceAPI(PisteOAuthClient):
         critere = query_builder.create_criteria(query, search_type)
         query_builder.add_field(field_type, [critere])
 
-        if fond in ("CODE_ETAT", "CODE_DATE") and code:
+        if fond in LegifranceQueryBuilder.CODE_FONDS and code:
             query_builder.add_filtre("TEXT_NOM_CODE", [code])
 
         if filters:
@@ -193,19 +160,13 @@ class LegifranceAPI(PisteOAuthClient):
         if sort:
             query_builder.set_sort(sort)
 
-        if fond in ("JORF", "CODE_ETAT", "CODE_DATE", "LODA_DATE", "LODA_ETAT"):
+        if fond in LegifranceQueryBuilder.VIGUEUR_DEFAULT_FONDS:
             query_builder.add_filtre("ARTICLE_LEGAL_STATUS", ["VIGUEUR"])
 
         payload = query_builder.build()
 
         try:
-            response = requests.post(
-                endpoint,
-                headers=self._get_api_headers(),
-                json=payload,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("POST", endpoint, json=payload)
             data = response.json()
             summary = self.clean(data) if clean else data
             return summary if summary else "Aucun résultat"
@@ -273,13 +234,7 @@ class LegifranceAPI(PisteOAuthClient):
             params = {"textCid": id_}
 
         try:
-            response = requests.post(
-                endpoint,
-                headers=self._get_api_headers(),
-                json=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("POST", endpoint, json=params)
             api_response = response.json()
             return self.clean(api_response) if clean else api_response
         except requests.exceptions.RequestException as e:

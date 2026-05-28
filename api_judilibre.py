@@ -16,7 +16,7 @@ from typing import Any, ClassVar, Dict, FrozenSet, List, Optional
 
 import requests
 
-from piste_auth import PISTE_HTTP_TIMEOUT, PisteOAuthClient
+from piste_auth import PisteOAuthClient
 from piste_utils import recursive_filter
 
 
@@ -139,13 +139,7 @@ class JudilibreAPI(PisteOAuthClient):
                 params[name] = value
 
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                params=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint, params=params)
             return self.clean(response.json())
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors de la recherche JudiLibre: {e}")
@@ -190,13 +184,7 @@ class JudilibreAPI(PisteOAuthClient):
             params["operator"] = operator
 
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                params=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint, params=params)
             return self.clean(response.json())
         except requests.exceptions.RequestException as e:
             raise Exception(f"Erreur lors de la récupération de la décision '{decision_id}': {e}")
@@ -258,13 +246,7 @@ class JudilibreAPI(PisteOAuthClient):
             }
 
         try:
-            response = requests.get(
-                endpoint,
-                headers=self._get_api_headers(),
-                params=params,
-                timeout=PISTE_HTTP_TIMEOUT,
-            )
-            response.raise_for_status()
+            response = self._request("GET", endpoint, params=params)
             data = response.json()
             return data.get("result", data)
         except requests.exceptions.RequestException as e:

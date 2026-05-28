@@ -11,10 +11,11 @@ Remarques :
    et d’outils d’intelligence artificielle.
 """
 
+import copy
 import logging
 import sys
 from functools import wraps
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 from fastmcp import FastMCP
 
@@ -34,16 +35,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _safe_init(cls: Type[Any], label: str) -> Optional[Any]:
+_init_errors: Dict[str, str] = {}
+
+
+def _safe_init(cls: Type[Any], label: str, key: str) -> Optional[Any]:
     """
     Instancie un client API en mode production en interceptant les erreurs
     d'initialisation pour permettre au serveur MCP de démarrer même si une API
-    est indisponible.
+    est indisponible. L'exception capturée est conservée dans `_init_errors`
+    afin que les outils puissent la rapporter à l'opérateur MCP plutôt que de
+    n'afficher qu'un générique "API non initialisée".
     """
     try:
         return cls(sandbox=False)
     except Exception as e:
-        logger.error(f"Erreur lors de l'initialisation de l'API {label}: {e}")
+        msg = f"{type(e).__name__}: {e}"
+        logger.exception(f"Erreur lors de l'initialisation de l'API {label}")
+        _init_errors[key] = msg
         return None
 
 
@@ -54,8 +62,8 @@ except Exception as e:
     logger.error(f"Échec de l'initialisation du serveur MCP: {e}")
     raise
 
-legifranceapi: Optional[LegifranceAPI] = _safe_init(LegifranceAPI, "LegiFrance")
-judilibreapi: Optional[JudilibreAPI] = _safe_init(JudilibreAPI, "Judilibre")
+legifranceapi: Optional[LegifranceAPI] = _safe_init(LegifranceAPI, "LegiFrance", "legifrance")
+judilibreapi: Optional[JudilibreAPI] = _safe_init(JudilibreAPI, "Judilibre", "judilibre")
 
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -63,23 +71,30 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 def safe_mcp_tool(error_label: str, on_error_return: Any) -> Callable[[F], F]:
     """
-    Décorateur qui ajoute un `try/except` + `logger.error` standardisé autour
+    Décorateur qui ajoute un `try/except` + `logger.exception` standardisé autour
     d'un `@mcp.tool`. Évite la duplication du même bloc défensif dans chaque
     outil exposé.
 
     Args:
         error_label: étiquette utilisée dans le message de log.
         on_error_return: valeur retournée si l'outil lève une exception
-            (préserve le contrat de retour observé par les tests).
+            (préserve le contrat de retour observé par les tests). Une copie
+            profonde est renvoyée à chaque appel afin qu'une éventuelle mutation
+            par l'appelant ne fuie pas vers les invocations suivantes.
+
+    Ordre des décorateurs : `@mcp.tool` DOIT être appliqué AU-DESSUS de
+    `@safe_mcp_tool`. Inverser l'ordre fait que FastMCP enregistre la fonction
+    brute (non protégée), et `safe_mcp_tool` reçoit l'objet d'enregistrement
+    FastMCP au lieu d'un callable.
     """
     def decorator(fn: F) -> F:
         @wraps(fn)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return fn(*args, **kwargs)
-            except Exception as e:
-                logger.error(f"{error_label}: {e}")
-                return on_error_return
+            except Exception:
+                logger.exception(error_label)
+                return copy.deepcopy(on_error_return)
         return wrapper  # type: ignore[return-value]
     return decorator
 
@@ -277,7 +292,8 @@ def rechercher_legifrance(
         return []
 
     if legifranceapi is None:
-        logger.error("API Légifrance non initialisée")
+        err = _init_errors.get("legifrance", "raison inconnue")
+        logger.error(f"API Légifrance non initialisée: {err}")
         return []
 
     # Source unique de vérité: LegifranceQueryBuilder.DATE_FILTER_FACETTES.
@@ -335,8 +351,9 @@ def consulter_legifrance(id: str) -> Any:
         return {"erreur": "L'ID de l'article ne peut pas être vide"}
 
     if legifranceapi is None:
-        logger.error("API Légifrance non initialisée")
-        return {"erreur": "L'API Légifrance n'est pas initialisée"}
+        err = _init_errors.get("legifrance", "raison inconnue")
+        logger.error(f"API Légifrance non initialisée: {err}")
+        return {"erreur": f"L'API Légifrance n'est pas initialisée ({err})"}
 
     return legifranceapi.consult(id)
 
@@ -385,8 +402,9 @@ def obtenir_taxonomie_judilibre(
     )
 
     if judilibreapi is None:
-        logger.error("API Judilibre non initialisée")
-        return {"erreur": "L'API Judilibre n'est pas initialisée"}
+        err = _init_errors.get("judilibre", "raison inconnue")
+        logger.error(f"API Judilibre non initialisée: {err}")
+        return {"erreur": f"L'API Judilibre n'est pas initialisée ({err})"}
 
     return judilibreapi.taxonomy(
         taxonomy_id=taxonomy_id, key=key, value=value, context_value=context_value
@@ -450,8 +468,9 @@ def rechercher_jurisprudence_judilibre(
         - judilibre://documentation/options-tri - Options de tri (tri + ordre)
    """
     if judilibreapi is None:
-        logger.error("API Judilibre non initialisée")
-        return [{"erreur": "L'API Judilibre n'est pas initialisée"}]
+        err = _init_errors.get("judilibre", "raison inconnue")
+        logger.error(f"API Judilibre non initialisée: {err}")
+        return [{"erreur": f"L'API Judilibre n'est pas initialisée ({err})"}]
 
     # Conversion des paramètres scalaires en listes pour l'API JudiLibre.
     jurisdiction_list = [juridiction] if juridiction else None
@@ -504,8 +523,9 @@ def consulter_decision_judilibre(decision_id: str) -> Any:
         return {"erreur": "L'ID de la décision ne peut pas être vide"}
 
     if judilibreapi is None:
-        logger.error("API Judilibre non initialisée")
-        return {"erreur": "L'API Judilibre n'est pas initialisée"}
+        err = _init_errors.get("judilibre", "raison inconnue")
+        logger.error(f"API Judilibre non initialisée: {err}")
+        return {"erreur": f"L'API Judilibre n'est pas initialisée ({err})"}
 
     return judilibreapi.consult(decision_id=decision_id)
 
