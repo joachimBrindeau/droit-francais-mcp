@@ -103,27 +103,58 @@ Afin de valider l'accès aux API, vous devez également valider les conditions d
 
 ## 🚀 Installation
 
-### 1. Cloner le dépôt
+### Option 1 — Exécution éphémère via `uvx` (recommandée)
+
+Aucune installation préalable. [`uv`](https://docs.astral.sh/uv/) télécharge le paquet, l'exécute dans un environnement isolé, puis nettoie.
+
+```json
+{
+  "mcpServers": {
+    "droit-francais": {
+      "command": "uvx",
+      "args": ["droit-francais-mcp"],
+      "env": {
+        "PISTE_CLIENT_ID": "votre_client_id",
+        "PISTE_CLIENT_SECRET": "votre_client_secret"
+      }
+    }
+  }
+}
+```
+
+### Option 2 — Installation persistante via `pipx`
+
+```bash
+pipx install droit-francais-mcp
+```
+
+Puis dans `claude_desktop_config.json` :
+
+```json
+{
+  "mcpServers": {
+    "droit-francais": {
+      "command": "droit-francais-mcp",
+      "env": {
+        "PISTE_CLIENT_ID": "votre_client_id",
+        "PISTE_CLIENT_SECRET": "votre_client_secret"
+      }
+    }
+  }
+}
+```
+
+### Option 3 — Installation depuis le source (développeurs)
 
 ```bash
 git clone https://github.com/jmtanguy/DroitFrancaisMCP.git
 cd DroitFrancaisMCP
+python3 -m venv .venv && source .venv/bin/activate  # ou .venv\Scripts\activate sur Windows
+pip install -e ".[dev]"            # mode éditable + outillage dev
+make test                          # tests offline (intégration sautés sans .env)
 ```
 
-Ou télécharger le ZIP de ce projet.
-
-### 2. Installation
-
-Exécuter le script d’installation correspondant à votre système d’exploitation :
-
-- Windows : install.ps1
-- macOS / Linux : install.sh
-
-Ces scripts effectuent automatiquement les opérations suivantes :
-
-- 📦 Création d’un environnement virtuel Python
-- 🔽 Installation de l’ensemble des dépendances nécessaires
-- ⚙️ Configuration du client Claude Desktop pour qu’il utilise ce serveur MCP
+Le serveur peut alors être lancé via `droit-francais-mcp` ou `python -m droit_francais_mcp`.
 
 ---
 
