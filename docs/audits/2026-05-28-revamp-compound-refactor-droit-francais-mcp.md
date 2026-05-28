@@ -6,7 +6,7 @@ prior_run_id: 20260528-124b1a
 scope: droit-francais-mcp
 scope_path: /Users/joachimbrindeau/Development/expand/production/jurisprudence/MCP/droit-francais-mcp
 command: compound-refactor
-status: awaiting_approval
+status: completed
 mode: "revamp"
 depth: "thorough"
 tier_floor: 2
@@ -201,8 +201,59 @@ Each boundary commits only after this gate exits 0:
 - `2026-05-28T09:01:46Z` — Phase 0 preflight: clean tree (commit `b7c22be`).
 - `2026-05-28T09:01:50Z` — Phase 1.7 baseline captured to `baseline.json`.
 - `2026-05-28T11:00:00Z` — Phase 1 frame: prior `20260528-124b1a` audit read; sibling MCP repos checked (none); pyproject + requirements + installers inspected.
-- `2026-05-28T11:02:00Z` — Phase 1.5 Wrong-Tool Gate: PROCEED (revamp = canonical-target restructure, no other tool covers it).
-- `2026-05-28T11:03:00Z` — Phase 2 discovery: 5 parallel agents (best-practices, framework-docs, architecture-strategist, pattern-recognition, testing-reviewer). Verified PR-001 (dead `_request`) and PR-007 (hardcoded fond tuples) directly via grep.
-- `2026-05-28T11:04:00Z` — Phase 3 consolidate: 23 findings ranked by tier × leverage; 7 boundaries identified.
+- `2026-05-28T11:02:00Z` — Phase 1.5 Wrong-Tool Gate: PROCEED.
+- `2026-05-28T11:03:00Z` — Phase 2 discovery: 5 parallel agents. Verified PR-001 (dead `_request`) and PR-007 (hardcoded fond tuples) by grep.
+- `2026-05-28T11:04:00Z` — Phase 3 consolidate: 23 findings ranked; 7 boundaries identified.
 - `2026-05-28T11:05:00Z` — Phase 4 audit file written (this document).
-- _Next_ — Phase 5 approval (HITL gate, EnterPlanMode).
+- `2026-05-28T11:08:00Z` — Phase 5 approval: user approved full-revamp via AskUserQuestion; single-PR / 7-atomic-commits strategy selected.
+- `2026-05-28T11:51:00Z` — B1 committed (`3687f52`): adopt `_request` + fix `safe_mcp_tool` + SSOT fond tuples + characterization tests.
+- `2026-05-28T11:52:00Z` — B2 committed (`048255f`): pyproject SSOT; delete `requirements.txt`, `requirements-dev.txt`, `__version__.py`.
+- `2026-05-28T11:55:00Z` — B3 committed (`e5d8e96`): `src/droit_francais_mcp/` package with `{piste,legifrance,judilibre}/` sub-packages; 6 module renames; import rewrites.
+- `2026-05-28T11:57:00Z` — B4 committed (`10d9367`): encapsulate `supports_date_filter()`; promote 7 underscore-private ClassVars to public uppercase; wire `API_LABEL` into OAuth error path.
+- `2026-05-28T11:59:00Z` — B5 committed (`b443c88`): tests → `tests/`; `test_jupyter.py` → `examples/jupyter_exploration.py`; conftest with skip-on-no-creds hook.
+- `2026-05-28T12:01:00Z` — B6 committed (`41db1bc`): ruff replaces flake8+black+isort+safety+bandit; `[project.scripts]` console-script; delete 3 install scripts; bump `requires-python` ≥ 3.10.
+- `2026-05-28T12:03:00Z` — B7 committed (`387e206`): back-compat shim at root; `Légifrance.json` → `docs/api-specs/`; CHANGELOG 1.3.0; README/QUICKSTART rewrite.
+
+## Δ Baseline → Final (Phase 9)
+
+| Metric | Baseline | Final | Δ |
+|---|---|---|---|
+| Layout | flat root (7 .py modules) | `src/droit_francais_mcp/` + 3 sub-packages | canonical |
+| Dependency declaration sites | 4 (drift between `>=` and `==`) | 1 (pyproject `[project]`) | **−3** |
+| Version declaration sites | 2 (pyproject + `__version__.py`) | 1 (pyproject, runtime via importlib.metadata) | **−1** |
+| Linter / formatter / security tools | 5 (flake8 + black + isort + safety + bandit) | 1 (ruff covers all four) + pip-audit | **−4** |
+| Install scripts (.sh / .bat / .ps1) | 3 | 0 (uvx + pipx + `[project.scripts]`) | **−3** |
+| Hand-rolled HTTP try/except blocks in clients | 5 (`_request` was dead) | 0 (all sites call `self._request`) | **−~60 LOC** |
+| Hardcoded fond tuples outside SSOT | 2 (api_legifrance:174, 196) | 0 (`CODE_FONDS` + `VIGUEUR_DEFAULT_FONDS` frozensets) | **−2** |
+| Characterization-test coverage of MCP surface | 0 | 9 tests (tool count + names, `safe_mcp_tool` envelope, `_init_errors`, frozensets, `_request` timeout) | **+9** |
+| `safe_mcp_tool` exception context | `logger.error(f"{label}: {e}")` (no traceback) | `logger.exception(label)` + deep-copy return | fixed |
+| `_safe_init` failure surfaced to client | no — generic message | yes — `_init_errors` dict + tool error payload includes reason | fixed |
+| MCP entry-point | `python droit_francais_MCP.py` (ad-hoc) | `droit-francais-mcp` console-script + `python -m droit_francais_mcp` + back-compat shim | canonical |
+| Tests location | repo root + `--ignore=test_jupyter.py` band-aid | `tests/`; `test_jupyter.py` → `examples/jupyter_exploration.py` | canonical |
+| Integration-test gating | bare `pytestmark = pytest.mark.integration` (53 noisy failures without creds) | conftest auto-skip when env missing, with clear reason | fixed |
+| `requirements.txt` encoding | UTF-16 LE | n/a (file deleted) | fixed |
+| `Légifrance.json` location | repo root (orphan, 308 KB) | `docs/api-specs/legifrance-swagger-2.0.json` | canonical |
+| Ruff lint findings | n/a (ruff not adopted) | 0 (all clean) | clean |
+| `requires-python` | `>=3.8` (3.8 EOL 2024-10-14) | `>=3.10` | bumped |
+| LOC in scope (.py only) | 3,231 | 3,514 (incl. +280 LOC characterization tests, +5 `__init__.py`, +shim) | +283 |
+| Total findings ranked | 23 | 23 resolved or filed | **all 23 addressed** |
+
+**Commits**: 7 atomic commits on branch `compound-refactor/revamp-20260528-8cf805`.
+  - `3687f52` B1 · `048255f` B2 · `e5d8e96` B3 · `10d9367` B4 · `b443c88` B5 · `41db1bc` B6 · `387e206` B7
+
+**Verification (final, Phase 7a re-run)**:
+  - `pytest --collect-only` → 77 tests discovered
+  - `pytest -m "not integration"` → 9 passed (the new MCP characterization suite)
+  - `ruff check src tests` → all checks passed
+  - `pip install -e ".[dev]"` → editable install OK; `droit-francais-mcp` binary present in `.venv/bin/`
+  - `make version` → `Version: 1.2.1 / Auteur: Jean-Michel Tanguy` via importlib.metadata
+  - `python -m droit_francais_mcp` and back-compat shim `python droit_francais_MCP.py` both delegate to `mcp.run()`
+
+**Net file delta**: 31 files changed, +1346 / −1209 (net +137 LOC counting docs, tests, audit). Deletions: `requirements.txt`, `requirements-dev.txt`, `__version__.py`, `install.{sh,bat,ps1}` (6 files removed). Additions: `src/droit_francais_mcp/{,__main__,piste,legifrance,judilibre}/__init__.py` × 5, `tests/{__init__,conftest}.py`, `tests/test_characterization.py`, audit doc, shim.
+
+**Iteration verdict**: `<compound-refactor-complete>` — every Tier-1 and Tier-2 finding consolidated; Tier-3 findings addressed (REVAMP-013 ClassVar publicization done; REVAMP-014 dead-code wired into error path; REVAMP-016 documented; REVAMP-019 moved). Prior-run advisory findings retained (Vibe Coding attribution: `deliberately_not_consolidated`). The remaining `.repair/` directory is gitignored and harmless.
+
+**Deliberately not done (deferred to follow-up runs)**:
+- `uv.lock` checked into repo (recommended by best-practices research; deferred until repo CI adopts `uv`).
+- `fastmcp.json` declarative config (optional 2.11+ feature; current `[project.scripts]` covers canonical invocation).
+- Lazy-init for `legifranceapi`/`judilibreapi` module globals (REVAMP-015): out-of-scope for revamp; would change the import-time contract and warrants its own behavior contract.
